@@ -1,0 +1,19 @@
+# Do not edit - changes here will be overwritten by Copier
+_commit: v1.0
+_src_path: gh:pydev-guide/pyrepo-copier
+author_email: mehdiseifi@gmail.com
+author_name: Mehdi Seifi
+git_versioning: true
+github_username: mese79
+mode: tooling
+module_name: core_bioimage_io_widgets
+project_license: BSD-3-Clause
+project_name: core-bioimage-io-widgets
+project_short_description: Have a widget that consumers (e.g. in napari) can use to
+    make their BioImage.io zip export
+test_pre_release: true
+use_black: true
+use_mypy: true
+use_pre_commit: true
+use_ruff: true
+
