@@ -19,7 +19,7 @@ from bioimageio.spec.shared.schema import SharedBioImageIOSchema
 
 def none_for_empty(text: str):
     """Makes sure the string is not empty otherwise returns None."""
-    return None if len(text) == 0 else text
+    return None if len(text.strip()) == 0 else text
 
 
 def to_html(text: str):

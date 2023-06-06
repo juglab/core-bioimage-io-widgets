@@ -75,9 +75,9 @@ class BioImageModelWidget(QWidget):
         license_label, _ = enhance_widget(license_combo, 'License', self.model_schema.fields['license'])
         #
         doc_textbox = QLineEdit()
-        doc_textbox.setPlaceholderText('Select Document (*.md) file')
+        doc_textbox.setPlaceholderText('Select Documentation (*.md) file')
         doc_textbox.setReadOnly(True)
-        doc_label, _ = enhance_widget(doc_textbox, 'Document', self.model_schema.fields['documentation'])
+        doc_label, _ = enhance_widget(doc_textbox, 'Documentation', self.model_schema.fields['documentation'])
         doc_button = QPushButton('Browse...')
         doc_button.clicked.connect(lambda: self.select_file('Mark Down files (*.md)', doc_textbox))
         #
