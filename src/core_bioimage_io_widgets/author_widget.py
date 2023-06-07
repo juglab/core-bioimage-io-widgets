@@ -24,7 +24,7 @@ class AuthorWidget(QWidget):
 
     submit = pyqtSignal(object, name='submit')
 
-    def __init__(self, author: nodes.rdf.Author=None, parent=None):
+    def __init__(self, author: nodes.rdf.Author = None, parent=None):
         super().__init__(parent)
 
         self.author = author
@@ -86,7 +86,6 @@ class AuthorWidget(QWidget):
         author_data = get_input_data(self)
         # validation
         errors = self.author_schema.validate(author_data)
-        print(errors)
         if errors:
             self.validation_widget.update_content(create_validation_ui(errors))
             return

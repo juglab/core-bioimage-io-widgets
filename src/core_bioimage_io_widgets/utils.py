@@ -31,6 +31,7 @@ def get_tooltip(field: SharedBioImageIOSchema) -> str:
     """Returns 'bioimageio_description' as an HTML string."""
     return to_html(field.bioimageio_description)
 
+
 def get_widget_text(widget: QWidget):
     """Returns current text inside the input widget."""
     # if isinstance(widget, QLineEdit):
@@ -53,7 +54,7 @@ def enhance_widget(
         input_widget.setToolTip(to_html(field.bioimageio_description))
         if field.required:
             label.setText(f'{label_text}<sup>*</sup>: ')
-            label.setStyleSheet('color: rgb(250,200,200)')
+            # label.setStyleSheet('color: rgb(250,200,200)')
 
     return label, input_widget
 
