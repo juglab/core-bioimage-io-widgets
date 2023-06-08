@@ -17,10 +17,12 @@ import nodes
 import schemas
 from utils import (
     enhance_widget, set_ui_data, get_input_data,
-    create_validation_ui
+    create_validation_ui,
+    TAGS
 )
 from author_widget import AuthorWidget
 from single_input_widget import SingleInputWidget
+from tags_input_widget import TagsInputWidget
 
 
 class BioImageModelWidget(QWidget):
@@ -85,7 +87,7 @@ class BioImageModelWidget(QWidget):
         authors_label = QLabel('Authors<sup>*</sup>:')
         # authors_label.setStyleSheet('color: rgb(250,200,200)')
         self.authors_listview = QListWidget()
-        self.authors_listview.setFixedHeight(100)
+        self.authors_listview.setFixedHeight(70)
         authors_button_add = QPushButton('Add')
         authors_button_add.clicked.connect(lambda: self.show_author_form(edit=False))
         authors_button_edit = QPushButton('Edit')
@@ -169,11 +171,14 @@ class BioImageModelWidget(QWidget):
         covers_btn_vbox.addWidget(covers_button_add_uri)
         covers_btn_vbox.addWidget(covers_button_del)
         covers_btn_vbox.insertStretch(-1, 1)
-
+        #
+        tags_widget = TagsInputWidget(predefined_tags=TAGS)
+        #
         grid = QGridLayout()
-        grid.addWidget(covers_label, 6, 0, alignment=Qt.AlignTop)
-        grid.addWidget(self.covers_listview, 6, 1, alignment=Qt.AlignTop)
-        grid.addLayout(covers_btn_vbox, 6, 2)
+        grid.addWidget(covers_label, 0, 0, alignment=Qt.AlignTop)
+        grid.addWidget(self.covers_listview, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
+        grid.addLayout(covers_btn_vbox, 0, 2)
+        grid.addWidget(tags_widget, 1, 0, 1, 2, alignment=Qt.AlignTop | Qt.AlignLeft)
 
         group = QGroupBox('Other Fields')
         group.setLayout(grid)
@@ -249,9 +254,13 @@ class BioImageModelWidget(QWidget):
 
     def add_cover_from_uri(self):
         """Shows a simple form to get a URI string."""
+        def _get_uri(uri):
+            if len(uri) > 0:
+                self.covers_listview.addItem(uri)
+
         input_win = SingleInputWidget(label='Cover Image URI:', title='Cover Image')
         input_win.setWindowModality(Qt.ApplicationModal)
-        input_win.submit.connect(lambda uri: self.covers_listview.addItem(uri))
+        input_win.submit.connect(_get_uri)
         input_win.show()
 
     def del_cover(self):

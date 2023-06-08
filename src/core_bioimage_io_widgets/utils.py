@@ -17,6 +17,9 @@ from PyQt5.QtWidgets import (
 from bioimageio.spec.shared.schema import SharedBioImageIOSchema
 
 
+TAGS = ['segmentation', 'nucleus-segmentation', 'object-detection', 'denoising']
+
+
 def none_for_empty(text: str):
     """Makes sure the string is not empty otherwise returns None."""
     return None if len(text.strip()) == 0 else text
