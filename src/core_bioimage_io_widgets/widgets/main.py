@@ -9,8 +9,8 @@ from qtpy.QtWidgets import (
     QComboBox, QCompleter, QFileDialog,
     QGridLayout, QGroupBox,
     QLabel, QLineEdit, QPlainTextEdit,
-    QPushButton, QVBoxLayout,
-    QListWidget, QMessageBox
+    QPushButton, QVBoxLayout, QFrame,
+    QListWidget, QMessageBox, QTabWidget
 )
 
 from core_bioimage_io_widgets.utils import nodes, schemas
@@ -34,9 +34,14 @@ class BioImageModelWidget(QWidget):
         self.model_schema = schemas.model.Model()
         self.authors: List[nodes.rdf.Author] = []
 
+        tabs = QTabWidget()
+        tabs.addTab(self.create_required_specs_ui(), "Required Fields")
+        tabs.addTab(self.create_other_spec_ui(), "Optional Fields")
+
         grid = QGridLayout()
-        grid.addWidget(self.create_required_specs_ui(), 0, 0)
-        grid.addWidget(self.create_other_spec_ui(), 1, 0)
+        grid.addWidget(tabs, 0, 0)
+        # grid.addWidget(self.create_required_specs_ui(), 0, 0)
+        # grid.addWidget(self.create_other_spec_ui(), 1, 0)
 
         self.setLayout(grid)
         self.setWindowTitle("Bioimage.io Model Specification")
@@ -84,7 +89,6 @@ class BioImageModelWidget(QWidget):
         doc_button.clicked.connect(lambda: self.select_file("Mark Down files (*.md)", doc_textbox))
         #
         authors_label = QLabel("Authors<sup>*</sup>:")
-        # authors_label.setStyleSheet("color: rgb(250,200,200)")
         self.authors_listview = QListWidget()
         self.authors_listview.setFixedHeight(70)
         authors_button_add = QPushButton("Add")
@@ -97,7 +101,6 @@ class BioImageModelWidget(QWidget):
         authors_btn_vbox.addWidget(authors_button_add)
         authors_btn_vbox.addWidget(authors_button_edit)
         authors_btn_vbox.addWidget(authors_button_del)
-        authors_btn_vbox.insertStretch(-1, 1)
         #
         self.test_inputs_listview = QListWidget()
         self.test_inputs_listview.setFixedHeight(70)
@@ -111,7 +114,6 @@ class BioImageModelWidget(QWidget):
         test_inputs_vbox = QVBoxLayout()
         test_inputs_vbox.addWidget(test_inputs_button_add)
         test_inputs_vbox.addWidget(test_inputs_button_del)
-        test_inputs_vbox.insertStretch(-1, 1)
         #
         self.test_outputs_listview = QListWidget()
         self.test_outputs_listview.setFixedHeight(70)
@@ -125,7 +127,6 @@ class BioImageModelWidget(QWidget):
         test_outputs_vbox = QVBoxLayout()
         test_outputs_vbox.addWidget(test_outputs_button_add)
         test_outputs_vbox.addWidget(test_outputs_button_del)
-        test_outputs_vbox.insertStretch(-1, 1)
         #
         required_layout = QGridLayout()
         # required_layout.addWidget(version_label, 0, 0)
@@ -139,20 +140,22 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(doc_label, 3, 0)
         required_layout.addWidget(doc_textbox, 3, 1)
         required_layout.addWidget(doc_button, 3, 2)
-        required_layout.addWidget(authors_label, 4, 0, )
+        required_layout.addWidget(authors_label, 4, 0)
         required_layout.addWidget(self.authors_listview, 4, 1)
         required_layout.addLayout(authors_btn_vbox, 4, 2)
         required_layout.addWidget(test_inputs_label, 5, 0)
         required_layout.addWidget(self.test_inputs_listview, 5, 1)
         required_layout.addLayout(test_inputs_vbox, 5, 2)
-        required_layout.addWidget(test_outputs_label, 6, 0, alignment=Qt.AlignTop)
-        required_layout.addWidget(self.test_outputs_listview, 6, 1, alignment=Qt.AlignTop)
+        required_layout.addWidget(test_outputs_label, 6, 0)
+        required_layout.addWidget(self.test_outputs_listview, 6, 1)
         required_layout.addLayout(test_outputs_vbox, 6, 2)
+        required_layout.setRowStretch(-1, 1)
         #
-        group = QGroupBox("Required Fields")
-        group.setLayout(required_layout)
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.NoFrame)
+        frame.setLayout(required_layout)
 
-        return group
+        return frame
 
     def create_other_spec_ui(self):
         """Create ui for optional specs."""
@@ -169,20 +172,20 @@ class BioImageModelWidget(QWidget):
         covers_btn_vbox.addWidget(covers_button_add)
         covers_btn_vbox.addWidget(covers_button_add_uri)
         covers_btn_vbox.addWidget(covers_button_del)
-        covers_btn_vbox.insertStretch(-1, 1)
         #
         tags_widget = TagsInputWidget(predefined_tags=TAGS)
         #
         grid = QGridLayout()
-        grid.addWidget(covers_label, 0, 0, alignment=Qt.AlignTop)
-        grid.addWidget(self.covers_listview, 0, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
+        grid.addWidget(covers_label, 0, 0)
+        grid.addWidget(self.covers_listview, 0, 1)
         grid.addLayout(covers_btn_vbox, 0, 2)
-        grid.addWidget(tags_widget, 1, 0, 1, 2, alignment=Qt.AlignTop | Qt.AlignLeft)
+        grid.addWidget(tags_widget, 1, 0, 1, 3, alignment=Qt.AlignTop | Qt.AlignLeft)
 
-        group = QGroupBox("Other Fields")
-        group.setLayout(grid)
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.NoFrame)
+        frame.setLayout(grid)
 
-        return group
+        return frame
 
     def select_file(self, filter: str, output_widget: QWidget = None):
         """Opens a file dialog and set the selected file into given widget's text."""

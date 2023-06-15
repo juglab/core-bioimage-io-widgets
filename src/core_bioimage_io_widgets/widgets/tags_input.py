@@ -31,8 +31,9 @@ class TagsInputWidget(QWidget):
 
         grid = QGridLayout()
         grid.addWidget(lbl, 0, 0)
-        grid.addLayout(self.tags_layout, 0, 1)
-        grid.addWidget(self.input_textbox, 1, 1, Qt.AlignTop | Qt.AlignLeft)
+        grid.addLayout(self.tags_layout, 0, 1, alignment=Qt.AlignLeft)
+        grid.addWidget(self.input_textbox, 1, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
+        grid.setRowStretch(-1, 1)
 
         self.setLayout(grid)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
