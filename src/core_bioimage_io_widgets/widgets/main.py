@@ -13,17 +13,15 @@ from qtpy.QtWidgets import (
     QListWidget, QMessageBox
 )
 
-import nodes
-import schemas
+from core_bioimage_io_widgets.utils import nodes, schemas
 from core_bioimage_io_widgets.resources import SPDX_LICENSES
-from utils import (
-    enhance_widget, set_ui_data, get_input_data,
-    create_validation_ui,
+from core_bioimage_io_widgets.widgets.ui_helper import (
+    enhance_widget,
     TAGS
 )
-from author_widget import AuthorWidget
-from single_input_widget import SingleInputWidget
-from tags_input_widget import TagsInputWidget
+from core_bioimage_io_widgets.widgets.author import AuthorWidget
+from core_bioimage_io_widgets.widgets.single_input import SingleInputWidget
+from core_bioimage_io_widgets.widgets.tags_input import TagsInputWidget
 
 
 class BioImageModelWidget(QWidget):
@@ -289,7 +287,6 @@ class BioImageModelWidget(QWidget):
             )
             if reply == QMessageBox.Yes:
                 list_widget.takeItem(curr_row)
-
 
 
 if __name__ == "__main__":

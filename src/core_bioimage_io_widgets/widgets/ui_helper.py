@@ -3,14 +3,9 @@ from marshmallow import missing
 from marshmallow.fields import Field
 import markdown
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
-    QWidget, QApplication, QCheckBox,
-    QComboBox, QCompleter, QFileDialog,
-    QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QLineEdit, QMenu, QPlainTextEdit,
-    QPushButton, QRadioButton, QVBoxLayout,
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import (
+    QWidget, QComboBox, QLabel,
 )
 
 # from bioimageio.spec.shared.fields import DocumentedField

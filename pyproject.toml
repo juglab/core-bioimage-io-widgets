@@ -32,7 +32,7 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    'PyQt5 >= 5.15',
+    'qtpy',
     'bioimageio.core',
     'markdown',
 ]
