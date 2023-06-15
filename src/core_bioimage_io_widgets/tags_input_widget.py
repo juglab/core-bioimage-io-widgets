@@ -14,12 +14,12 @@ from PyQt5.QtWidgets import (
 class TagsInputWidget(QWidget):
     """A widget for displaying/adding tags."""
 
-    def __init__(self, predefined_tags: List = [], label: str = 'Tags', parent: QWidget = None) -> None:
+    def __init__(self, predefined_tags: List = [], label: str = "Tags", parent: QWidget = None) -> None:
         super().__init__(parent)
 
         self.tags = []
 
-        lbl = QLabel(label + ':')
+        lbl = QLabel(label + ":")
         self.input_textbox = QLineEdit()
         self.input_textbox.returnPressed.connect(self.add_tag)
         self.input_textbox.setFixedWidth(150)
@@ -60,15 +60,15 @@ class TagsInputWidget(QWidget):
             tag_ui = self._create_tag_ui(tag)
             self.tags_layout.addWidget(tag_ui, alignment=Qt.AlignLeft)
 
-        self.input_textbox.setText('')
+        self.input_textbox.setText("")
         # print(self.tags_layout.sizeHint().width())
 
     def _create_tag_ui(self, tag: str):
         tag_label = QLabel(tag)
-        tag_label.setStyleSheet('border:0px')
-        x_button = QPushButton('X')
+        tag_label.setStyleSheet("border:0px")
+        x_button = QPushButton("X")
         x_button.setFixedSize(20, 20)
-        x_button.setStyleSheet('border:0px; font-weight:bold; color: rgb(192, 192, 232)')
+        x_button.setStyleSheet("border:0px; font-weight:bold; color: rgb(192, 192, 232)")
         x_button.clicked.connect(partial(self.remove_tag, tag))
         layout = QHBoxLayout()
         # layout.setSpacing(3)
@@ -76,7 +76,7 @@ class TagsInputWidget(QWidget):
         layout.addWidget(x_button)
         frame = QFrame()
         frame.setStyleSheet(
-            'border:1px solid rgb(192, 192, 232); border-radius: 4px;'
+            "border:1px solid rgb(192, 192, 232); border-radius: 4px;"
         )
         frame.setContentsMargins(0, 0, 0, 0)
         frame.setFixedHeight(40)
@@ -88,10 +88,10 @@ class TagsInputWidget(QWidget):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)
-    win = TagsInputWidget(predefined_tags=['Mehdi', 'Joran', 'Florian', 'John'])
+    win = TagsInputWidget(predefined_tags=["Mehdi", "Joran", "Florian", "John"])
     win.show()
     sys.exit(app.exec_())

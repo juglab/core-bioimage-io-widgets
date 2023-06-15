@@ -40,7 +40,7 @@ class BioImageModelWidget(QWidget):
         grid.addWidget(self.create_other_spec_ui(), 1, 0)
 
         self.setLayout(grid)
-        self.setWindowTitle('Bioimage.io Model Specification')
+        self.setWindowTitle("Bioimage.io Model Specification")
 
         self.populate_authors_list()
 
@@ -52,19 +52,19 @@ class BioImageModelWidget(QWidget):
         """Create ui for the required specs."""
         version_combo = QComboBox()
         version_label, _ = enhance_widget(
-            version_combo, 'Format Version', self.model_schema.fields['format_version']
+            version_combo, "Format Version", self.model_schema.fields["format_version"]
         )
-        version_combo.addItem('0.4.9')
-        version_combo.addItem('0.3')
+        version_combo.addItem("0.4.9")
+        version_combo.addItem("0.3")
         version_combo.setEnabled(False)
         #
         name_textbox = QLineEdit()
-        name_label, _ = enhance_widget(name_textbox, 'Name', self.model_schema.fields['name'])
+        name_label, _ = enhance_widget(name_textbox, "Name", self.model_schema.fields["name"])
         #
         description_textbox = QPlainTextEdit()
         description_textbox.setFixedHeight(65)
         description_label, _ = enhance_widget(
-            description_textbox, 'Description', self.model_schema.fields['description']
+            description_textbox, "Description", self.model_schema.fields["description"]
         )
         #
         license_combo = QComboBox()
@@ -75,24 +75,24 @@ class BioImageModelWidget(QWidget):
         license_completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
         license_completer.setCaseSensitivity(Qt.CaseInsensitive)
         license_combo.setCompleter(license_completer)
-        license_label, _ = enhance_widget(license_combo, 'License', self.model_schema.fields['license'])
+        license_label, _ = enhance_widget(license_combo, "License", self.model_schema.fields["license"])
         #
         doc_textbox = QLineEdit()
-        doc_textbox.setPlaceholderText('Select Documentation (*.md) file')
+        doc_textbox.setPlaceholderText("Select Documentation (*.md) file")
         doc_textbox.setReadOnly(True)
-        doc_label, _ = enhance_widget(doc_textbox, 'Documentation', self.model_schema.fields['documentation'])
-        doc_button = QPushButton('Browse...')
-        doc_button.clicked.connect(lambda: self.select_file('Mark Down files (*.md)', doc_textbox))
+        doc_label, _ = enhance_widget(doc_textbox, "Documentation", self.model_schema.fields["documentation"])
+        doc_button = QPushButton("Browse...")
+        doc_button.clicked.connect(lambda: self.select_file("Mark Down files (*.md)", doc_textbox))
         #
-        authors_label = QLabel('Authors<sup>*</sup>:')
-        # authors_label.setStyleSheet('color: rgb(250,200,200)')
+        authors_label = QLabel("Authors<sup>*</sup>:")
+        # authors_label.setStyleSheet("color: rgb(250,200,200)")
         self.authors_listview = QListWidget()
         self.authors_listview.setFixedHeight(70)
-        authors_button_add = QPushButton('Add')
+        authors_button_add = QPushButton("Add")
         authors_button_add.clicked.connect(lambda: self.show_author_form(edit=False))
-        authors_button_edit = QPushButton('Edit')
+        authors_button_edit = QPushButton("Edit")
         authors_button_edit.clicked.connect(lambda: self.show_author_form(edit=True))
-        authors_button_del = QPushButton('Remove')
+        authors_button_del = QPushButton("Remove")
         authors_button_del.clicked.connect(self.del_author)
         authors_btn_vbox = QVBoxLayout()
         authors_btn_vbox.addWidget(authors_button_add)
@@ -103,11 +103,11 @@ class BioImageModelWidget(QWidget):
         self.test_inputs_listview = QListWidget()
         self.test_inputs_listview.setFixedHeight(70)
         test_inputs_label, _ = enhance_widget(
-            self.test_inputs_listview, 'Test Inputs', self.model_schema.fields['test_inputs']
+            self.test_inputs_listview, "Test Inputs", self.model_schema.fields["test_inputs"]
         )
-        test_inputs_button_add = QPushButton('Add')
+        test_inputs_button_add = QPushButton("Add")
         test_inputs_button_add.clicked.connect(lambda: self.select_npy_file(self.test_inputs_listview))
-        test_inputs_button_del = QPushButton('Remove')
+        test_inputs_button_del = QPushButton("Remove")
         test_inputs_button_del.clicked.connect(lambda: self.del_test_io(self.test_inputs_listview))
         test_inputs_vbox = QVBoxLayout()
         test_inputs_vbox.addWidget(test_inputs_button_add)
@@ -117,11 +117,11 @@ class BioImageModelWidget(QWidget):
         self.test_outputs_listview = QListWidget()
         self.test_outputs_listview.setFixedHeight(70)
         test_outputs_label, _ = enhance_widget(
-            self.test_outputs_listview, 'Test Outputs', self.model_schema.fields['test_outputs']
+            self.test_outputs_listview, "Test Outputs", self.model_schema.fields["test_outputs"]
         )
-        test_outputs_button_add = QPushButton('Add')
+        test_outputs_button_add = QPushButton("Add")
         test_outputs_button_add.clicked.connect(lambda: self.select_npy_file(self.test_outputs_listview))
-        test_outputs_button_del = QPushButton('Remove')
+        test_outputs_button_del = QPushButton("Remove")
         test_outputs_button_del.clicked.connect(lambda: self.del_test_io(self.test_outputs_listview))
         test_outputs_vbox = QVBoxLayout()
         test_outputs_vbox.addWidget(test_outputs_button_add)
@@ -150,21 +150,21 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(self.test_outputs_listview, 6, 1, alignment=Qt.AlignTop)
         required_layout.addLayout(test_outputs_vbox, 6, 2)
         #
-        group = QGroupBox('Required Fields')
+        group = QGroupBox("Required Fields")
         group.setLayout(required_layout)
 
         return group
 
     def create_other_spec_ui(self):
         """Create ui for optional specs."""
-        covers_label = QLabel('Covers:')
+        covers_label = QLabel("Covers:")
         self.covers_listview = QListWidget()
         self.covers_listview.setFixedHeight(100)
-        covers_button_add = QPushButton('Add Image File')
+        covers_button_add = QPushButton("Add Image File")
         covers_button_add.clicked.connect(self.add_cover_image)
-        covers_button_add_uri = QPushButton('Add from URI')
+        covers_button_add_uri = QPushButton("Add from URI")
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
-        covers_button_del = QPushButton('Remove')
+        covers_button_del = QPushButton("Remove")
         covers_button_del.clicked.connect(self.del_cover)
         covers_btn_vbox = QVBoxLayout()
         covers_btn_vbox.addWidget(covers_button_add)
@@ -180,14 +180,14 @@ class BioImageModelWidget(QWidget):
         grid.addLayout(covers_btn_vbox, 0, 2)
         grid.addWidget(tags_widget, 1, 0, 1, 2, alignment=Qt.AlignTop | Qt.AlignLeft)
 
-        group = QGroupBox('Other Fields')
+        group = QGroupBox("Other Fields")
         group.setLayout(grid)
 
         return group
 
     def select_file(self, filter: str, output_widget: QWidget = None):
         """Opens a file dialog and set the selected file into given widget's text."""
-        selected_file, _filter = QFileDialog.getOpenFileName(self, 'Browse', '.', filter)
+        selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
         if output_widget is not None:
             output_widget.setText(selected_file)
 
@@ -196,9 +196,9 @@ class BioImageModelWidget(QWidget):
     def get_spdx_licenses(self):
         """Read the licenses identifier from the json file aquired from https://github.com/spdx/license-list-data/tree/main/json."""
         root_path = Path(__file__).parent
-        with open(root_path.joinpath('./spdx_licenses.json')) as f:
-            licenses: List[Dict] = json.load(f).get('licenses', [])
-        return [lic['licenseId'] for lic in licenses]
+        with open(root_path.joinpath("./spdx_licenses.json")) as f:
+            licenses: List[Dict] = json.load(f).get("licenses", [])
+        return [lic["licenseId"] for lic in licenses]
 
     def show_author_form(self, edit: bool = False):
         """Shows the author form to add a new or modify selected author."""
@@ -237,7 +237,7 @@ class BioImageModelWidget(QWidget):
         curr_row = self.authors_listview.currentRow()
         if curr_row > -1:
             reply = QMessageBox.warning(
-                self, 'Bioimage.io', 'Are you sure you want to remove the selected author?',
+                self, "Bioimage.io", "Are you sure you want to remove the selected author?",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No
             )
             if reply == QMessageBox.Yes:
@@ -247,7 +247,7 @@ class BioImageModelWidget(QWidget):
     def add_cover_image(self):
         """Select cover image(s) by a file dialog."""
         selected_files, _ = QFileDialog.getOpenFileNames(
-            self, 'Select Cover Image(s)', '.', 'Images(*.png *.jpg *.gif)'
+            self, "Select Cover Image(s)", ".", "Images(*.png *.jpg *.gif)"
         )
         for file in selected_files:
             self.covers_listview.addItem(file)
@@ -258,7 +258,7 @@ class BioImageModelWidget(QWidget):
             if len(uri) > 0:
                 self.covers_listview.addItem(uri)
 
-        input_win = SingleInputWidget(label='Cover Image URI:', title='Cover Image')
+        input_win = SingleInputWidget(label="Cover Image URI:", title="Cover Image")
         input_win.setWindowModality(Qt.ApplicationModal)
         input_win.submit.connect(_get_uri)
         input_win.show()
@@ -268,7 +268,7 @@ class BioImageModelWidget(QWidget):
         curr_row = self.covers_listview.currentRow()
         if curr_row > -1:
             reply = QMessageBox.warning(
-                self, 'Bioimage.io', 'Are you sure you want to remove the selected cover?',
+                self, "Bioimage.io", "Are you sure you want to remove the selected cover?",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No
             )
             if reply == QMessageBox.Yes:
@@ -276,7 +276,7 @@ class BioImageModelWidget(QWidget):
 
     def select_npy_file(self, list_widget: QListWidget):
         """Select a numpy file as a test input."""
-        selected_file = self.select_file('Numpy File (*.npy)')
+        selected_file = self.select_file("Numpy File (*.npy)")
         list_widget.addItem(selected_file)
 
     def del_test_io(self, list_widget: QListWidget):
@@ -284,7 +284,7 @@ class BioImageModelWidget(QWidget):
         curr_row = list_widget.currentRow()
         if curr_row > -1:
             reply = QMessageBox.warning(
-                self, 'Bioimage.io', 'Are you sure you want to remove the selected test input?',
+                self, "Bioimage.io", "Are you sure you want to remove the selected test input?",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No
             )
             if reply == QMessageBox.Yes:
@@ -292,7 +292,7 @@ class BioImageModelWidget(QWidget):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = BioImageModelWidget()
     win.show()

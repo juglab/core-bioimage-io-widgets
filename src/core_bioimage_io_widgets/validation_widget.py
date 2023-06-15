@@ -23,7 +23,7 @@ class ValidationWidget(QtWidgets.QWidget):
         vbox.setContentsMargins(0, 0, 0, 0)
         vbox.addWidget(scroller)
 
-        group = QtWidgets.QGroupBox(title='Validation Errors:')
+        group = QtWidgets.QGroupBox(title="Validation Errors:")
         group.setLayout(vbox)
 
         vbox2 = QtWidgets.QVBoxLayout()

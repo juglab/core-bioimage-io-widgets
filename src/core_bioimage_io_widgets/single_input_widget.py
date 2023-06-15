@@ -9,17 +9,17 @@ from PyQt5.QtWidgets import (
 class SingleInputWidget(QWidget):
     """Simple form to get a single input."""
 
-    submit = pyqtSignal(object, name='submit')
+    submit = pyqtSignal(object, name="submit")
 
-    def __init__(self, label: str = '', title: str = '', parent=None):
+    def __init__(self, label: str = "", title: str = "", parent=None):
         super().__init__(parent)
 
         lbl = QLabel(label)
         self.input_textbox = QLineEdit()
         self.input_textbox.setMinimumWidth(420)
-        submit_button = QPushButton('&Submit')
+        submit_button = QPushButton("&Submit")
         submit_button.clicked.connect(self.submit_input)
-        cancel_button = QPushButton('&Cancel')
+        cancel_button = QPushButton("&Cancel")
         cancel_button.clicked.connect(lambda: self.close())
 
         hbox = QHBoxLayout()
@@ -43,10 +43,10 @@ class SingleInputWidget(QWidget):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)
-    win = SingleInputWidget(label='Cover Image URI:', title='Cover Image')
+    win = SingleInputWidget(label="Cover Image URI:", title="Cover Image")
     win.show()
     sys.exit(app.exec_())

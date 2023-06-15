@@ -22,7 +22,7 @@ from utils import (
 class AuthorWidget(QWidget):
     """Author form widget."""
 
-    submit = pyqtSignal(object, name='submit')
+    submit = pyqtSignal(object, name="submit")
 
     def __init__(self, author: nodes.rdf.Author = None, parent=None):
         super().__init__(parent)
@@ -38,27 +38,27 @@ class AuthorWidget(QWidget):
         """Creates ui for author's profile."""
         self.name_textbox = QLineEdit()
         name_label, _ = enhance_widget(
-            self.name_textbox, 'Name', self.author_schema.fields['name']
+            self.name_textbox, "Name", self.author_schema.fields["name"]
         )
         self.email_textbox = QLineEdit()
         email_label, _ = enhance_widget(
-            self.email_textbox, 'Email', self.author_schema.fields['email']
+            self.email_textbox, "Email", self.author_schema.fields["email"]
         )
         self.affiliation_textbox = QLineEdit()
         affiliation_label, _ = enhance_widget(
-            self.affiliation_textbox, 'Affiliation', self.author_schema.fields['affiliation']
+            self.affiliation_textbox, "Affiliation", self.author_schema.fields["affiliation"]
         )
         self.git_textbox = QLineEdit()
         git_label, _ = enhance_widget(
-            self.git_textbox, 'Github User Name', self.author_schema.fields['github_user']
+            self.git_textbox, "Github User Name", self.author_schema.fields["github_user"]
         )
         self.orcid_textbox = QLineEdit()
         orcid_label, _ = enhance_widget(
-            self.orcid_textbox, 'ORCID', self.author_schema.fields['orcid']
+            self.orcid_textbox, "ORCID", self.author_schema.fields["orcid"]
         )
-        submit_button = QPushButton('&Submit')
+        submit_button = QPushButton("&Submit")
         submit_button.clicked.connect(self.submit_author)
-        cancel_button = QPushButton('&Cancel')
+        cancel_button = QPushButton("&Cancel")
         cancel_button.clicked.connect(lambda: self.close())
 
         self.validation_widget = ValidationWidget()
@@ -79,7 +79,7 @@ class AuthorWidget(QWidget):
         grid.addWidget(submit_button, 6, 1, Qt.AlignBottom)
 
         self.setLayout(grid)
-        self.setWindowTitle('Author Profile')
+        self.setWindowTitle("Author Profile")
 
     def submit_author(self):
         """Validate and submit the entered author's profile."""
@@ -98,7 +98,7 @@ class AuthorWidget(QWidget):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)

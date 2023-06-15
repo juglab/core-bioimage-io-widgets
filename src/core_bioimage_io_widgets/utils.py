@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 from bioimageio.spec.shared.schema import SharedBioImageIOSchema
 
 
-TAGS = ['segmentation', 'nucleus-segmentation', 'object-detection', 'denoising']
+TAGS = ["segmentation", "nucleus-segmentation", "object-detection", "denoising"]
 
 
 def none_for_empty(text: str):
@@ -37,8 +37,6 @@ def get_tooltip(field: SharedBioImageIOSchema) -> str:
 
 def get_widget_text(widget: QWidget):
     """Returns current text inside the input widget."""
-    # if isinstance(widget, QLineEdit):
-        # return widget.text()
     if isinstance(widget, QComboBox):
         return widget.currentText()
 
@@ -53,11 +51,11 @@ def enhance_widget(
     label_text = label_text.title()
     label = QLabel(label_text)
     if field is not None:
-        input_widget.setProperty('field', field)
+        input_widget.setProperty("field", field)
         input_widget.setToolTip(to_html(field.bioimageio_description))
         if field.required:
-            label.setText(f'{label_text}<sup>*</sup>: ')
-            # label.setStyleSheet('color: rgb(250,200,200)')
+            label.setText(f"{label_text}<sup>*</sup>: ")
+            # label.setStyleSheet("color: rgb(250,200,200)")
 
     return label, input_widget
 
@@ -68,11 +66,11 @@ def set_ui_data(parent: QWidget, data: Any):
         return
 
     for child in parent.findChildren(QWidget):
-        field = child.property('field')
+        field = child.property("field")
         if field is not None:
             value = getattr(data, field.name)
             if value is missing:
-                value = ''
+                value = ""
             child.setText(value)
 
 
@@ -80,7 +78,7 @@ def get_input_data(parent: QWidget):
     """Get input data from ui elements that have the field property."""
     entity = {}
     for child in parent.findChildren(QWidget):
-        field = child.property('field')
+        field = child.property("field")
         if field is not None:
             text = get_widget_text(child)
             if field.required or len(text) > 0:
@@ -93,9 +91,9 @@ def create_validation_ui(errors: Dict):
     """Create ui for validation errors."""
     widgets = []
     for field_name, msg_list in errors.items():
-        msg = ' | '.join(m for m in msg_list)
-        label = QLabel(f'{field_name.title()}: {msg}')
-        label.setStyleSheet('color: rgb(240, 40, 90)')
+        msg = " | ".join(m for m in msg_list)
+        label = QLabel(f"{field_name.title()}: {msg}")
+        label.setStyleSheet("color: rgb(240, 40, 90)")
         label.setAlignment(Qt.AlignCenter)
         widgets.append(label)
 
