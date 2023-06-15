@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
 
 import nodes
 import schemas
+from core_bioimage_io_widgets.resources import SPDX_LICENSES
 from utils import (
     enhance_widget, set_ui_data, get_input_data,
     create_validation_ui,
@@ -195,8 +196,7 @@ class BioImageModelWidget(QWidget):
 
     def get_spdx_licenses(self):
         """Read the licenses identifier from the json file aquired from https://github.com/spdx/license-list-data/tree/main/json."""
-        root_path = Path(__file__).parent
-        with open(root_path.joinpath("./spdx_licenses.json")) as f:
+        with open(SPDX_LICENSES) as f:
             licenses: List[Dict] = json.load(f).get("licenses", [])
         return [lic["licenseId"] for lic in licenses]
 
