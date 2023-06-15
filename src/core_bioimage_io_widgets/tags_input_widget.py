@@ -1,11 +1,10 @@
 from functools import partial
 from typing import List
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import (
     QWidget, QApplication,
-    QGridLayout, QHBoxLayout, QVBoxLayout,
+    QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton,
     QCompleter, QFrame, QSizePolicy
 )

@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import (
     QWidget, QApplication,
     QGridLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton
@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 class SingleInputWidget(QWidget):
     """Simple form to get a single input."""
 
-    submit = pyqtSignal(object, name="submit")
+    submit = Signal(object, name="submit")
 
     def __init__(self, label: str = "", title: str = "", parent=None):
         super().__init__(parent)

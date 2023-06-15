@@ -1,13 +1,9 @@
 from typing import Dict, List, Tuple
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
-    QWidget, QApplication, QCheckBox,
-    QComboBox, QCompleter, QFileDialog,
-    QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QLineEdit, QMenu, QPlainTextEdit,
-    QPushButton, QRadioButton, QVBoxLayout,
-    QSizePolicy,
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import (
+    QWidget, QApplication, QGridLayout,
+    QLineEdit, QPushButton,
 )
 
 import nodes
@@ -22,7 +18,7 @@ from utils import (
 class AuthorWidget(QWidget):
     """Author form widget."""
 
-    submit = pyqtSignal(object, name="submit")
+    submit = Signal(object, name="submit")
 
     def __init__(self, author: nodes.rdf.Author = None, parent=None):
         super().__init__(parent)

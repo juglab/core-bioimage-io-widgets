@@ -3,13 +3,13 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
-    QWidget, QApplication, QCheckBox,
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import (
+    QWidget, QApplication,
     QComboBox, QCompleter, QFileDialog,
-    QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QLineEdit, QMenu, QPlainTextEdit,
-    QPushButton, QRadioButton, QVBoxLayout,
+    QGridLayout, QGroupBox,
+    QLabel, QLineEdit, QPlainTextEdit,
+    QPushButton, QVBoxLayout,
     QListWidget, QMessageBox
 )
 
