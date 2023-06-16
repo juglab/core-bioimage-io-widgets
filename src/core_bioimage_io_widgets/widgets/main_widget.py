@@ -11,7 +11,7 @@ from qtpy.QtWidgets import (
 )
 
 from core_bioimage_io_widgets.utils import (
-    nodes, schemas,
+    nodes, schemas, FORMAT_VERSION,
     get_spdx_licenses, get_predefined_tags
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
@@ -52,14 +52,6 @@ class BioImageModelWidget(QWidget):
 
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
-        version_combo = QComboBox()
-        version_label, _ = enhance_widget(
-            version_combo, "Format Version", self.model_schema.fields["format_version"]
-        )
-        version_combo.addItem("0.4.9")
-        version_combo.addItem("0.3")
-        version_combo.setEnabled(False)
-        #
         name_textbox = QLineEdit()
         name_label, _ = enhance_widget(name_textbox, "Name", self.model_schema.fields["name"])
         #
@@ -127,8 +119,6 @@ class BioImageModelWidget(QWidget):
         test_outputs_vbox.addWidget(test_outputs_button_del)
         #
         required_layout = QGridLayout()
-        # required_layout.addWidget(version_label, 0, 0)
-        # required_layout.addWidget(version_combo, 0, 1)
         required_layout.addWidget(name_label, 0, 0)
         required_layout.addWidget(name_textbox, 0, 1)
         required_layout.addWidget(description_label, 1, 0)
