@@ -1,13 +1,10 @@
-import json
 import sys
-from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QWidget, QApplication,
+    QWidget, QApplication, QGridLayout,
     QComboBox, QCompleter, QFileDialog,
-    QGridLayout, QGroupBox,
     QLabel, QLineEdit, QPlainTextEdit,
     QPushButton, QVBoxLayout, QFrame,
     QListWidget, QMessageBox, QTabWidget
@@ -20,9 +17,9 @@ from core_bioimage_io_widgets.utils import (
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget
 )
-from core_bioimage_io_widgets.widgets.author import AuthorWidget
-from core_bioimage_io_widgets.widgets.single_input import SingleInputWidget
-from core_bioimage_io_widgets.widgets.tags_input import TagsInputWidget
+from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
+from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
+from core_bioimage_io_widgets.widgets.tags_input_widget import TagsInputWidget
 
 
 class BioImageModelWidget(QWidget):

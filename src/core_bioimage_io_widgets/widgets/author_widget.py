@@ -7,7 +7,7 @@ from qtpy.QtWidgets import (
 )
 
 from core_bioimage_io_widgets.utils import nodes, schemas
-from core_bioimage_io_widgets.widgets.validation import ValidationWidget
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, set_ui_data, get_input_data,
     create_validation_ui
