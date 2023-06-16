@@ -13,11 +13,12 @@ from qtpy.QtWidgets import (
     QListWidget, QMessageBox, QTabWidget
 )
 
-from core_bioimage_io_widgets.utils import nodes, schemas
-from core_bioimage_io_widgets.resources import SPDX_LICENSES
+from core_bioimage_io_widgets.utils import (
+    nodes, schemas,
+    get_spdx_licenses, get_predefined_tags
+)
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget,
-    TAGS
+    enhance_widget
 )
 from core_bioimage_io_widgets.widgets.author import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input import SingleInputWidget
@@ -72,10 +73,10 @@ class BioImageModelWidget(QWidget):
         )
         #
         license_combo = QComboBox()
-        license_combo.addItems(self.get_spdx_licenses())
+        license_combo.addItems(get_spdx_licenses())
         license_combo.setEditable(True)
         license_combo.setInsertPolicy(QComboBox.NoInsert)
-        license_completer = QCompleter(self.get_spdx_licenses())
+        license_completer = QCompleter(get_spdx_licenses())
         license_completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
         license_completer.setCaseSensitivity(Qt.CaseInsensitive)
         license_combo.setCompleter(license_completer)
@@ -173,7 +174,7 @@ class BioImageModelWidget(QWidget):
         covers_btn_vbox.addWidget(covers_button_add_uri)
         covers_btn_vbox.addWidget(covers_button_del)
         #
-        tags_widget = TagsInputWidget(predefined_tags=TAGS)
+        tags_widget = TagsInputWidget(predefined_tags=get_predefined_tags())
         #
         grid = QGridLayout()
         grid.addWidget(covers_label, 0, 0)
@@ -194,12 +195,6 @@ class BioImageModelWidget(QWidget):
             output_widget.setText(selected_file)
 
         return selected_file
-
-    def get_spdx_licenses(self):
-        """Read the licenses identifier from the json file aquired from https://github.com/spdx/license-list-data/tree/main/json."""
-        with open(SPDX_LICENSES) as f:
-            licenses: List[Dict] = json.load(f).get("licenses", [])
-        return [lic["licenseId"] for lic in licenses]
 
     def show_author_form(self, edit: bool = False):
         """Shows the author form to add a new or modify selected author."""
