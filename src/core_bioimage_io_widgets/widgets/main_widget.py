@@ -3,11 +3,12 @@ from typing import List
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QWidget, QApplication, QGridLayout,
+    QWidget, QApplication, 
+    QGridLayout, QVBoxLayout, QHBoxLayout,
     QComboBox, QCompleter, QFileDialog,
     QLabel, QLineEdit, QPlainTextEdit,
-    QPushButton, QVBoxLayout, QFrame,
-    QListWidget, QMessageBox, QTabWidget
+    QPushButton, QFrame, QListWidget,
+    QMessageBox, QTabWidget
 )
 
 from core_bioimage_io_widgets.utils import (
@@ -98,9 +99,9 @@ class BioImageModelWidget(QWidget):
             self.test_inputs_listview, "Test Inputs", self.model_schema.fields["test_inputs"]
         )
         test_inputs_button_add = QPushButton("Add")
-        test_inputs_button_add.clicked.connect(lambda: self.select_npy_file(self.test_inputs_listview))
+        test_inputs_button_add.clicked.connect(self.add_test_input)
         test_inputs_button_del = QPushButton("Remove")
-        test_inputs_button_del.clicked.connect(lambda: self.del_test_io(self.test_inputs_listview))
+        test_inputs_button_del.clicked.connect(self.remove_test_input)
         test_inputs_vbox = QVBoxLayout()
         test_inputs_vbox.addWidget(test_inputs_button_add)
         test_inputs_vbox.addWidget(test_inputs_button_del)
@@ -111,12 +112,30 @@ class BioImageModelWidget(QWidget):
             self.test_outputs_listview, "Test Outputs", self.model_schema.fields["test_outputs"]
         )
         test_outputs_button_add = QPushButton("Add")
-        test_outputs_button_add.clicked.connect(lambda: self.select_npy_file(self.test_outputs_listview))
+        test_outputs_button_add.clicked.connect(
+            lambda: self.select_add_npy_to_listview(self.test_outputs_listview)
+        )
         test_outputs_button_del = QPushButton("Remove")
-        test_outputs_button_del.clicked.connect(lambda: self.del_test_io(self.test_outputs_listview))
+        test_outputs_button_del.clicked.connect(
+            lambda: self.remove_from_list(self.test_outputs_listview)
+        )
         test_outputs_vbox = QVBoxLayout()
         test_outputs_vbox.addWidget(test_outputs_button_add)
         test_outputs_vbox.addWidget(test_outputs_button_del)
+        #
+        inputs_label = QLabel("Inputs<sup>*</sup>:")
+        self.inputs_listview = QListWidget()
+        self.inputs_listview.setFixedHeight(70)
+        inputs_button_add = QPushButton("Add")
+        # inputs_button_add.clicked.connect(lambda: self.show_inputs_form(edit=False))
+        inputs_button_edit = QPushButton("Edit")
+        # inputs_button_edit.clicked.connect(lambda: self.show_inputs_form(edit=True))
+        inputs_button_del = QPushButton("Remove")
+        # inputs_button_del.clicked.connect(self.del_input)
+        self.inputs_btn_vbox = QVBoxLayout()
+        self.inputs_btn_vbox.addWidget(inputs_button_add)
+        self.inputs_btn_vbox.addWidget(inputs_button_edit)
+        self.inputs_btn_vbox.addWidget(inputs_button_del)
         #
         required_layout = QGridLayout()
         required_layout.addWidget(name_label, 0, 0)
@@ -137,11 +156,16 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(test_outputs_label, 6, 0)
         required_layout.addWidget(self.test_outputs_listview, 6, 1)
         required_layout.addLayout(test_outputs_vbox, 6, 2)
+        required_layout.addWidget(inputs_label, 7, 0)
+        required_layout.addWidget(self.inputs_listview, 7, 1)
+        required_layout.addLayout(self.inputs_btn_vbox, 7, 2)
         required_layout.setRowStretch(-1, 1)
         #
         frame = QFrame()
         frame.setFrameStyle(QFrame.NoFrame)
         frame.setLayout(required_layout)
+
+        self.check_test_input()
 
         return frame
 
@@ -151,11 +175,14 @@ class BioImageModelWidget(QWidget):
         self.covers_listview = QListWidget()
         self.covers_listview.setFixedHeight(100)
         covers_button_add = QPushButton("Add Image File")
-        covers_button_add.clicked.connect(self.add_cover_image)
+        covers_button_add.clicked.connect(self.add_cover_images)
         covers_button_add_uri = QPushButton("Add from URI")
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
         covers_button_del = QPushButton("Remove")
-        covers_button_del.clicked.connect(self.del_cover)
+        covers_button_del.clicked.connect(
+            lambda: self.remove_from_list(self.covers_listview,
+                                          "Are you sure you want to remove the selected cover?")
+        )
         covers_btn_vbox = QVBoxLayout()
         covers_btn_vbox.addWidget(covers_button_add)
         covers_btn_vbox.addWidget(covers_button_add_uri)
@@ -175,13 +202,14 @@ class BioImageModelWidget(QWidget):
 
         return frame
 
-    def select_file(self, filter: str, output_widget: QWidget = None):
-        """Opens a file dialog and set the selected file into given widget's text."""
-        selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
-        if output_widget is not None:
-            output_widget.setText(selected_file)
+    def check_test_input(self):
+        """Check if there is any Test Input available, so the Inputs' buttons should be enabled."""
+        is_available = self.test_inputs_listview.count() > 0
+        # set inputs field button enabled/disabled
+        for i in range(self.inputs_btn_vbox.count()):
+            self.inputs_btn_vbox.itemAt(i).widget().setEnabled(is_available)
 
-        return selected_file
+        return is_available
 
     def show_author_form(self, edit: bool = False):
         """Shows the author form to add a new or modify selected author."""
@@ -190,6 +218,8 @@ class BioImageModelWidget(QWidget):
             curr_row = self.authors_listview.currentRow()
             if curr_row > -1:
                 author = self.authors[curr_row]
+            else:
+                return
         else:
             # new entry: unselect current row
             self.authors_listview.setCurrentRow(-1)
@@ -216,19 +246,24 @@ class BioImageModelWidget(QWidget):
         self.populate_authors_list()
 
     def del_author(self):
-        """Delete the selected author."""
-        curr_row = self.authors_listview.currentRow()
-        if curr_row > -1:
-            reply = QMessageBox.warning(
-                self, "Bioimage.io", "Are you sure you want to remove the selected author?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                del self.authors[curr_row]
-                self.populate_authors_list()
+        """Remove the selected author."""
+        reply, del_row = self.remove_from_list(
+            self.authors_listview, "Are you sure you want to remove the selected author?"
+        )
+        if reply:
+            del self.authors[del_row]
+            self.populate_authors_list()
 
-    def add_cover_image(self):
-        """Select cover image(s) by a file dialog."""
+    def select_file(self, filter: str, output_widget: QWidget = None):
+        """Opens a file dialog and set the selected file into given widget's text."""
+        selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
+        if output_widget is not None:
+            output_widget.setText(selected_file)
+
+        return selected_file
+
+    def add_cover_images(self):
+        """Select cover images by a file dialog, and add them to the Cover's listview."""
         selected_files, _ = QFileDialog.getOpenFileNames(
             self, "Select Cover Image(s)", ".", "Images(*.png *.jpg *.gif)"
         )
@@ -246,32 +281,38 @@ class BioImageModelWidget(QWidget):
         input_win.submit.connect(_get_uri)
         input_win.show()
 
-    def del_cover(self):
-        """Delete the selected cover url/file."""
-        curr_row = self.covers_listview.currentRow()
-        if curr_row > -1:
-            reply = QMessageBox.warning(
-                self, "Bioimage.io", "Are you sure you want to remove the selected cover?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                self.covers_listview.takeItem(curr_row)
-
-    def select_npy_file(self, list_widget: QListWidget):
-        """Select a numpy file as a test input."""
+    def select_add_npy_to_listview(self, list_widget: QListWidget):
+        """Select a numpy file as a test input/outpu and add it to the listview."""
         selected_file = self.select_file("Numpy File (*.npy)")
         list_widget.addItem(selected_file)
 
-    def del_test_io(self, list_widget: QListWidget):
-        """Delete the selected test input file."""
+    def remove_from_list(self, list_widget: QListWidget, msg: str = None):
+        """Remove the selected item from the given list."""
         curr_row = list_widget.currentRow()
         if curr_row > -1:
             reply = QMessageBox.warning(
-                self, "Bioimage.io", "Are you sure you want to remove the selected test input?",
+                self, "Bioimage.io",
+                msg or "Are you sure you want to remove the selected item from the list?",
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No
             )
             if reply == QMessageBox.Yes:
                 list_widget.takeItem(curr_row)
+
+        return reply == QMessageBox.Yes, curr_row
+
+    def add_test_input(self):
+        """Select/Add a npy file as a test input to the list."""
+        numpy_file = self.select_file("Numpy File (*.npy)")
+        # check the numpy file and extract info out of it
+
+        self.test_inputs_listview.addItem(numpy_file)
+        # we have a Test Input so enable the Inputs buttons
+        self.check_test_input()
+
+    def remove_test_input(self):
+        """Remove a numpy file from the Test Inputs listview."""
+        self.remove_from_list(self.test_inputs_listview)
+        self.check_test_input()
 
 
 if __name__ == "__main__":
