@@ -73,7 +73,7 @@ class BioImageModelWidget(QWidget):
         license_label, _ = enhance_widget(license_combo, "License", self.model_schema.fields["license"])
         #
         doc_textbox = QLineEdit()
-        doc_textbox.setPlaceholderText("Select Documentation (*.md) file")
+        doc_textbox.setPlaceholderText("Select Documentation file (*.md)")
         doc_textbox.setReadOnly(True)
         doc_label, _ = enhance_widget(doc_textbox, "Documentation", self.model_schema.fields["documentation"])
         doc_button = QPushButton("Browse...")
@@ -93,18 +93,19 @@ class BioImageModelWidget(QWidget):
         authors_btn_vbox.addWidget(authors_button_edit)
         authors_btn_vbox.addWidget(authors_button_del)
         #
-        self.test_inputs_listview = QListWidget()
-        self.test_inputs_listview.setFixedHeight(70)
-        test_inputs_label, _ = enhance_widget(
-            self.test_inputs_listview, "Test Inputs", self.model_schema.fields["test_inputs"]
-        )
-        test_inputs_button_add = QPushButton("Add")
-        test_inputs_button_add.clicked.connect(self.add_test_input)
-        test_inputs_button_del = QPushButton("Remove")
-        test_inputs_button_del.clicked.connect(self.remove_test_input)
-        test_inputs_vbox = QVBoxLayout()
-        test_inputs_vbox.addWidget(test_inputs_button_add)
-        test_inputs_vbox.addWidget(test_inputs_button_del)
+        inputs_label = QLabel("Inputs<sup>*</sup>:")
+        self.inputs_listview = QListWidget()
+        self.inputs_listview.setFixedHeight(70)
+        inputs_button_add = QPushButton("Add")
+        # inputs_button_add.clicked.connect(lambda: self.show_inputs_form(edit=False))
+        inputs_button_edit = QPushButton("Edit")
+        # inputs_button_edit.clicked.connect(lambda: self.show_inputs_form(edit=True))
+        inputs_button_del = QPushButton("Remove")
+        # inputs_button_del.clicked.connect(self.del_input)
+        self.inputs_btn_vbox = QVBoxLayout()
+        self.inputs_btn_vbox.addWidget(inputs_button_add)
+        self.inputs_btn_vbox.addWidget(inputs_button_edit)
+        self.inputs_btn_vbox.addWidget(inputs_button_del)
         #
         self.test_outputs_listview = QListWidget()
         self.test_outputs_listview.setFixedHeight(70)
@@ -123,20 +124,6 @@ class BioImageModelWidget(QWidget):
         test_outputs_vbox.addWidget(test_outputs_button_add)
         test_outputs_vbox.addWidget(test_outputs_button_del)
         #
-        inputs_label = QLabel("Inputs<sup>*</sup>:")
-        self.inputs_listview = QListWidget()
-        self.inputs_listview.setFixedHeight(70)
-        inputs_button_add = QPushButton("Add")
-        # inputs_button_add.clicked.connect(lambda: self.show_inputs_form(edit=False))
-        inputs_button_edit = QPushButton("Edit")
-        # inputs_button_edit.clicked.connect(lambda: self.show_inputs_form(edit=True))
-        inputs_button_del = QPushButton("Remove")
-        # inputs_button_del.clicked.connect(self.del_input)
-        self.inputs_btn_vbox = QVBoxLayout()
-        self.inputs_btn_vbox.addWidget(inputs_button_add)
-        self.inputs_btn_vbox.addWidget(inputs_button_edit)
-        self.inputs_btn_vbox.addWidget(inputs_button_del)
-        #
         required_layout = QGridLayout()
         required_layout.addWidget(name_label, 0, 0)
         required_layout.addWidget(name_textbox, 0, 1)
@@ -150,22 +137,19 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(authors_label, 4, 0)
         required_layout.addWidget(self.authors_listview, 4, 1)
         required_layout.addLayout(authors_btn_vbox, 4, 2)
-        required_layout.addWidget(test_inputs_label, 5, 0)
-        required_layout.addWidget(self.test_inputs_listview, 5, 1)
-        required_layout.addLayout(test_inputs_vbox, 5, 2)
+        required_layout.addWidget(inputs_label, 5, 0)
+        required_layout.addWidget(self.inputs_listview, 5, 1)
+        required_layout.addLayout(self.inputs_btn_vbox, 5, 2)
         required_layout.addWidget(test_outputs_label, 6, 0)
         required_layout.addWidget(self.test_outputs_listview, 6, 1)
         required_layout.addLayout(test_outputs_vbox, 6, 2)
-        required_layout.addWidget(inputs_label, 7, 0)
-        required_layout.addWidget(self.inputs_listview, 7, 1)
-        required_layout.addLayout(self.inputs_btn_vbox, 7, 2)
         required_layout.setRowStretch(-1, 1)
         #
         frame = QFrame()
         frame.setFrameStyle(QFrame.NoFrame)
         frame.setLayout(required_layout)
 
-        self.check_test_input()
+        # self.check_test_input()
 
         return frame
 
@@ -202,14 +186,14 @@ class BioImageModelWidget(QWidget):
 
         return frame
 
-    def check_test_input(self):
-        """Check if there is any Test Input available, so the Inputs' buttons should be enabled."""
-        is_available = self.test_inputs_listview.count() > 0
-        # set inputs field button enabled/disabled
-        for i in range(self.inputs_btn_vbox.count()):
-            self.inputs_btn_vbox.itemAt(i).widget().setEnabled(is_available)
+    # def check_test_input(self):
+    #     """Check if there is any Test Input available, so the Inputs' buttons should be enabled."""
+    #     is_available = self.test_inputs_listview.count() > 0
+    #     # set inputs field button enabled/disabled
+    #     for i in range(self.inputs_btn_vbox.count()):
+    #         self.inputs_btn_vbox.itemAt(i).widget().setEnabled(is_available)
 
-        return is_available
+    #     return is_available
 
     def show_author_form(self, edit: bool = False):
         """Shows the author form to add a new or modify selected author."""
@@ -300,19 +284,19 @@ class BioImageModelWidget(QWidget):
 
         return reply == QMessageBox.Yes, curr_row
 
-    def add_test_input(self):
-        """Select/Add a npy file as a test input to the list."""
-        numpy_file = self.select_file("Numpy File (*.npy)")
-        # check the numpy file and extract info out of it
+    # def add_test_input(self):
+    #     """Select/Add a npy file as a test input to the list."""
+    #     numpy_file = self.select_file("Numpy File (*.npy)")
+    #     # check the numpy file and extract info out of it
 
-        self.test_inputs_listview.addItem(numpy_file)
-        # we have a Test Input so enable the Inputs buttons
-        self.check_test_input()
+    #     self.test_inputs_listview.addItem(numpy_file)
+    #     # we have a Test Input so enable the Inputs buttons
+    #     self.check_test_input()
 
-    def remove_test_input(self):
-        """Remove a numpy file from the Test Inputs listview."""
-        self.remove_from_list(self.test_inputs_listview)
-        self.check_test_input()
+    # def remove_test_input(self):
+    #     """Remove a numpy file from the Test Inputs listview."""
+    #     self.remove_from_list(self.test_inputs_listview)
+    #     self.check_test_input()
 
 
 if __name__ == "__main__":
