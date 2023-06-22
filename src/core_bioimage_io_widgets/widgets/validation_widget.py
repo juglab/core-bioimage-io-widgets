@@ -35,12 +35,13 @@ class ValidationWidget(QtWidgets.QWidget):
 
     def update_content(self, widget_list):
         """Clears the content area, and then adds new widgets to it."""
-        self._clear_content_area()
+        self.clear_content_area()
         # add widgets
         for widget in widget_list:
             self.content_layout.addWidget(widget, alignment=QtCore.Qt.AlignLeft)
         self.update()
 
-    def _clear_content_area(self):
+    def clear_content_area(self):
+        """Clears the content area."""
         for i in reversed(range(self.content_layout.count())):
             self.content_layout.itemAt(i).widget().deleteLater()

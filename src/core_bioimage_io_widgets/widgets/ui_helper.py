@@ -6,11 +6,12 @@ import markdown
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QWidget, QComboBox, QLabel,
-    QLayout,
+    QLayout, QListWidget, QMessageBox
 )
 
-# from bioimageio.spec.shared.fields import DocumentedField
 from bioimageio.spec.shared.schema import SharedBioImageIOSchema
+
+from core_bioimage_io_widgets.utils import flatten
 
 
 def none_for_empty(text: str):
@@ -90,15 +91,16 @@ def set_ui_data(parent: QWidget, data: Any):
 def get_input_data(parent: QWidget):
     """Get input data from ui elements that have the field property."""
     entities = {}
-    for i in range(parent.count()):
-        widget = parent.itemAt(i).widget()
-        if widget:
-            field = widget.property("field")
-            if field is not None:
-                text = get_widget_text(widget)
-                text = none_for_empty(text)
-                if text or field.required:
-                    entities[field.name] = convert_data(text, field.type_name)
+    # for i in range(parent.count()):
+    for widget in parent.findChildren(QWidget):
+        # widget = parent.itemAt(i).widget()
+        # if widget:
+        field = widget.property("field")
+        if field is not None:
+            text = get_widget_text(widget)
+            text = none_for_empty(text)
+            if text or field.required:
+                entities[field.name] = convert_data(text, field.type_name)
 
     return entities
 
@@ -107,7 +109,8 @@ def create_validation_ui(errors: Dict):
     """Create ui for validation errors."""
     widgets = []
     for field_name, msg_list in errors.items():
-        msg = " | ".join(m for m in msg_list)
+        msg_list = flatten(msg_list)
+        msg = " | ".join(msg_list)
         label = QLabel(f"{field_name.title()}: {msg}")
         label.setStyleSheet("color: rgb(240, 40, 90)")
         label.setAlignment(Qt.AlignCenter)
@@ -126,3 +129,18 @@ def clear_layout(layout: QLayout) -> None:
             item.widget().deleteLater()
         else:
             clear_layout(item.layout())
+
+
+def remove_from_list(parent: QWidget, list_widget: QListWidget, msg: str = None):
+    """Remove the selected item from the given list."""
+    curr_row = list_widget.currentRow()
+    if curr_row > -1:
+        reply = QMessageBox.warning(
+            parent, "Bioimage.io",
+            msg or "Are you sure you want to remove the selected item from the list?",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            list_widget.takeItem(curr_row)
+
+    return reply == QMessageBox.Yes, curr_row

@@ -16,7 +16,7 @@ from core_bioimage_io_widgets.utils import (
     get_spdx_licenses, get_predefined_tags
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget
+    enhance_widget, remove_from_list
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
@@ -97,9 +97,9 @@ class BioImageModelWidget(QWidget):
         self.inputs_listview = QListWidget()
         self.inputs_listview.setFixedHeight(70)
         inputs_button_add = QPushButton("Add")
-        # inputs_button_add.clicked.connect(lambda: self.show_inputs_form(edit=False))
+        # inputs_button_add.clicked.connect(lambda: self.show_input_form(edit=False))
         inputs_button_edit = QPushButton("Edit")
-        # inputs_button_edit.clicked.connect(lambda: self.show_inputs_form(edit=True))
+        # inputs_button_edit.clicked.connect(lambda: self.show_input_form(edit=True))
         inputs_button_del = QPushButton("Remove")
         # inputs_button_del.clicked.connect(self.del_input)
         self.inputs_btn_vbox = QVBoxLayout()
@@ -118,7 +118,7 @@ class BioImageModelWidget(QWidget):
         )
         test_outputs_button_del = QPushButton("Remove")
         test_outputs_button_del.clicked.connect(
-            lambda: self.remove_from_list(self.test_outputs_listview)
+            lambda: remove_from_list(self.test_outputs_listview)
         )
         test_outputs_vbox = QVBoxLayout()
         test_outputs_vbox.addWidget(test_outputs_button_add)
@@ -149,8 +149,6 @@ class BioImageModelWidget(QWidget):
         frame.setFrameStyle(QFrame.NoFrame)
         frame.setLayout(required_layout)
 
-        # self.check_test_input()
-
         return frame
 
     def create_other_spec_ui(self):
@@ -164,7 +162,7 @@ class BioImageModelWidget(QWidget):
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
         covers_button_del = QPushButton("Remove")
         covers_button_del.clicked.connect(
-            lambda: self.remove_from_list(self.covers_listview,
+            lambda: remove_from_list(self.covers_listview,
                                           "Are you sure you want to remove the selected cover?")
         )
         covers_btn_vbox = QVBoxLayout()
@@ -185,15 +183,6 @@ class BioImageModelWidget(QWidget):
         frame.setLayout(grid)
 
         return frame
-
-    # def check_test_input(self):
-    #     """Check if there is any Test Input available, so the Inputs' buttons should be enabled."""
-    #     is_available = self.test_inputs_listview.count() > 0
-    #     # set inputs field button enabled/disabled
-    #     for i in range(self.inputs_btn_vbox.count()):
-    #         self.inputs_btn_vbox.itemAt(i).widget().setEnabled(is_available)
-
-    #     return is_available
 
     def show_author_form(self, edit: bool = False):
         """Shows the author form to add a new or modify selected author."""
@@ -231,7 +220,7 @@ class BioImageModelWidget(QWidget):
 
     def del_author(self):
         """Remove the selected author."""
-        reply, del_row = self.remove_from_list(
+        reply, del_row = remove_from_list(
             self.authors_listview, "Are you sure you want to remove the selected author?"
         )
         if reply:
@@ -269,34 +258,6 @@ class BioImageModelWidget(QWidget):
         """Select a numpy file as a test input/outpu and add it to the listview."""
         selected_file = self.select_file("Numpy File (*.npy)")
         list_widget.addItem(selected_file)
-
-    def remove_from_list(self, list_widget: QListWidget, msg: str = None):
-        """Remove the selected item from the given list."""
-        curr_row = list_widget.currentRow()
-        if curr_row > -1:
-            reply = QMessageBox.warning(
-                self, "Bioimage.io",
-                msg or "Are you sure you want to remove the selected item from the list?",
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                list_widget.takeItem(curr_row)
-
-        return reply == QMessageBox.Yes, curr_row
-
-    # def add_test_input(self):
-    #     """Select/Add a npy file as a test input to the list."""
-    #     numpy_file = self.select_file("Numpy File (*.npy)")
-    #     # check the numpy file and extract info out of it
-
-    #     self.test_inputs_listview.addItem(numpy_file)
-    #     # we have a Test Input so enable the Inputs buttons
-    #     self.check_test_input()
-
-    # def remove_test_input(self):
-    #     """Remove a numpy file from the Test Inputs listview."""
-    #     self.remove_from_list(self.test_inputs_listview)
-    #     self.check_test_input()
 
 
 if __name__ == "__main__":

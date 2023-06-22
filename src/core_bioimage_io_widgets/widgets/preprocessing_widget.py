@@ -10,10 +10,10 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtGui import QDoubleValidator, QRegExpValidator
 
-import numpy as np
+from marshmallow import missing
 
 from core_bioimage_io_widgets.utils import (
-    nodes, schemas,
+    schemas, nodes,
     PREPROCESSING_TYPES
 )
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
@@ -28,7 +28,7 @@ class PreprocessingWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, preprocess: nodes.model.Preprocessing = None, parent: QWidget = None) -> None:
         super().__init__(parent)
         self.process_schema = None
 
@@ -62,7 +62,7 @@ class PreprocessingWidget(QWidget):
 
         self.setLayout(grid)
         self.setMaximumWidth(470)
-        self.setMinimumHeight(300)
+        self.setMinimumHeight(360)
         self.setWindowTitle("Preprocessing Parameters")
 
         self.select_preprocessing()
@@ -75,6 +75,7 @@ class PreprocessingWidget(QWidget):
 
         # create ui for the selected preprocessing type's parameters:
         clear_layout(self.fields_grid)
+        self.validation_widget.clear_content_area()
         self.process_schema = process_type_class()
         self.process_description_label.setText(self.process_schema.bioimageio_description)
         for i, (_, field) in enumerate(sorted(self.process_schema.fields.items())):
@@ -83,9 +84,11 @@ class PreprocessingWidget(QWidget):
                 qinput.addItems(field.valid_modes)
             else:
                 qinput = QLineEdit()
-                # set validator
+                # set input validator
                 if field.type_name.endswith("Float"):
                     qinput.setValidator(QDoubleValidator())
+                    if field.default is not missing:
+                        qinput.setText(str(field.default))
                 elif field.type_name.startswith("Axes"):
                     regex = QRegExp(
                         r"^(?!.*(.).*\1)[CHARS]*$".replace("CHARS", field.metadata["valid_axes"])
@@ -102,7 +105,7 @@ class PreprocessingWidget(QWidget):
 
     def submit_process(self):
         """Validate the process parameters and submit it."""
-        process_data = get_input_data(self.fields_grid)
+        process_data = get_input_data(self)
         errors = self.process_schema.validate(process_data)
         if errors:
             self.validation_widget.update_content(create_validation_ui(errors))
@@ -110,7 +113,7 @@ class PreprocessingWidget(QWidget):
             # submit preprocess data
             preprocess = schemas.model.Preprocessing().load({
                 'name': self.process_combo.currentText(),
-                'kwargs': get_input_data(self.fields_grid)
+                'kwargs': process_data
             })
             self.submit.emit(preprocess)
             self.close()

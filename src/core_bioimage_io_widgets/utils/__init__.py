@@ -12,3 +12,14 @@ AXES = ["b", "i", "t", "c", "z", "y", "x"]
 AXES_REGEX = r"^(?!.*(.).*\1)[bitczyx]{LEN}$"
 PREPROCESSING_TYPES = get_args(model.PreprocessingName)
 PROCESSING_MODES = {mode: ProcMode.explanations[mode] for mode in ProcMode.all_modes}
+
+
+def flatten(nested):
+    """Flatten a list of lists recursively."""
+    if len(nested) == 0:
+        return nested
+    if isinstance(nested, dict):
+        nested = list(nested.values())
+    if isinstance(nested[0], list):
+        return flatten(nested[0]) + flatten(nested[1:])
+    return nested[:1] + flatten(nested[1:])
