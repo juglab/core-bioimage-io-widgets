@@ -12,6 +12,7 @@ AXES = ["b", "i", "t", "c", "z", "y", "x"]
 AXES_REGEX = r"^(?!.*(.).*\1)[bitczyx]{LEN}$"
 PREPROCESSING_TYPES = get_args(model.PreprocessingName)
 PROCESSING_MODES = {mode: ProcMode.explanations[mode] for mode in ProcMode.all_modes}
+WEIGHT_FORMATS = get_args(model.WeightsFormat)
 
 
 def flatten(nested):

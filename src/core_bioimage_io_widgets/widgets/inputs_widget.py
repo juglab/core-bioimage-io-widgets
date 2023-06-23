@@ -34,18 +34,21 @@ class InputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, input_tensor: nodes.model.InputTensor = None, input_names: list = [], parent=None):
+    def __init__(self, model_input: dict = None, input_names: list = [], parent=None):
         super().__init__(parent)
 
-        self.input_tensor = input_tensor
+        self.input_tensor: nodes.model.InputTensor = None
+        self.test_input: str = None
+        if model_input is not None:
+            self.input_tensor = model_input.get('input_tensor')
+            self.test_input = model_input.get('test_input')
+
         self.input_tensor_schema = schemas.model.InputTensor()
         self.input_names = input_names  # to make this input has a unique name
         self.input_shape = []
         self.preprocessings = []
 
         self.create_ui()
-        if self.input_tensor is not None:
-            set_ui_data(self, self.input_tensor)
 
     def create_ui(self):
         """Creates ui for model's input tensor."""
@@ -127,23 +130,28 @@ class InputTensorWidget(QWidget):
     def submit_input_tensor(self):
         """Validate and submit the input tensor."""
         input_data = {
-            'name': self.name_textbox.text(),
-            'data_type': 'float32',
-            'shape': self.input_shape,
-            'axes': self.axes_textbox.text(),
-            'preprocessing': self.preprocessings
+            "name": self.name_textbox.text(),
+            "data_type": "float32",
+            "shape": self.input_shape,
+            "axes": self.axes_textbox.text(),
+            "preprocessing": self.preprocessings
         }
         # validation
         errors = self.input_tensor_schema.validate(input_data)
         if errors:
             self.validation_widget.update_content(create_validation_ui(errors))
             return
+        # check input name is unique
+        if self.name_textbox.text() in self.input_names:
+            errors = {"name": ["Input name must be unique."]}
+            self.validation_widget.update_content(create_validation_ui(errors))
+            return
 
         # emit submit signal and send input data
         input_tensor = self.input_tensor_schema.load(input_data)
         self.submit.emit({
-            'test_input': self.test_input_textbox.text(),
-            'input_tensor': input_tensor
+            "test_input": self.test_input_textbox.text(),
+            "input_tensor": input_tensor
         })
         self.close()
 
@@ -152,7 +160,9 @@ class InputTensorWidget(QWidget):
         selected_file, _ = QFileDialog.getOpenFileName(self, "Browse", ".", "Numpy file (*.npy)")
         self.test_input_textbox.setText(selected_file)
         self.input_groupbox.setEnabled(True)
-        with open(selected_file, mode='rb') as f:
+        self.test_input = selected_file
+        # read numpy file
+        with open(selected_file, mode="rb") as f:
             arr = np.load(f)
         _max_len = len(arr.shape)
         # input shape
