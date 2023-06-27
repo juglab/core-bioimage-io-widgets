@@ -6,12 +6,11 @@ import markdown
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QWidget, QComboBox, QLabel, QPlainTextEdit,
-    QLayout, QListWidget, QMessageBox
+    QLayout, QListWidget, QMessageBox, QLineEdit,
+    QFileDialog,
 )
 
-from bioimageio.spec.shared.schema import SharedBioImageIOSchema
-
-from core_bioimage_io_widgets.utils import flatten
+from core_bioimage_io_widgets.utils import schemas, nodes, flatten
 
 
 def none_for_empty(text: str):
@@ -24,7 +23,7 @@ def to_html(text: str):
     return markdown.markdown(text)
 
 
-def get_tooltip(field: SharedBioImageIOSchema) -> str:
+def get_tooltip(field: schemas.SharedBioImageIOSchema) -> str:
     """Returns 'bioimageio_description' as an HTML string."""
     return to_html(field.bioimageio_description)
 
@@ -39,8 +38,20 @@ def get_widget_text(widget: QWidget):
     return widget.text()
 
 
+def set_widget_text(widget: QWidget, text: str):
+    """Sets the text of the input widget."""
+    if isinstance(widget, QLineEdit):
+        widget.setText(text)
+    elif isinstance(widget, QComboBox):
+        index = widget.findText(text)
+        if index > -1:
+            widget.setCurrentIndex(index)
+    elif isinstance(widget, QPlainTextEdit):
+        widget.setPlainText(text)
+
+
 def safe_cast(value, to_type, default=None):
-    """Cast value to given type safely."""
+    """Casts value to given type safely."""
     try:
         return to_type(value)
     except (ValueError, TypeError):
@@ -48,7 +59,7 @@ def safe_cast(value, to_type, default=None):
 
 
 def convert_data(text: str, field_type: str):
-    """Convert string data into field type."""
+    """Converts string data into field type."""
     if field_type.endswith('Float'):
         return safe_cast(text, float, default=text)
     elif field_type.endswith('Integer'):
@@ -61,9 +72,9 @@ def convert_data(text: str, field_type: str):
 
 def enhance_widget(
         input_widget: QWidget, label_text: str,
-        field: Union[SharedBioImageIOSchema, Field] = None
+        field: Union[schemas.SharedBioImageIOSchema, Field] = None
         ):
-    """Add a label, and set some properties on the input widget."""
+    """Adds a label, and set some properties on the input widget."""
     label_text = label_text.title()
     label = QLabel(label_text + ":")
     if field is not None:
@@ -71,13 +82,26 @@ def enhance_widget(
         input_widget.setToolTip(to_html(field.bioimageio_description))
         if field.required:
             label.setText(f"{label_text}<sup>*</sup>: ")
-            # label.setStyleSheet("color: rgb(250,200,200)")
 
     return label, input_widget
 
 
-def set_ui_data(parent: QWidget, data: Any):
-    """Fill ui widgets with given data based on field(schema) property."""
+def set_ui_data_from_dict(parent: QWidget, data: dict):
+    """Fills ui widgets with given data based on widget's field property."""
+    if data is None:
+        return
+
+    for child in parent.findChildren(QWidget):
+        field = child.property("field")
+        if field is not None:
+            value = data.get(field.name, None)
+            if value is None:
+                value = ""
+            set_widget_text(child, value)
+
+
+def set_ui_data_from_node(parent: QWidget, data: nodes.RawNode):
+    """Fills ui widgets with given data based on widget's field property."""
     if data is None:
         return
 
@@ -87,11 +111,11 @@ def set_ui_data(parent: QWidget, data: Any):
             value = getattr(data, field.name)
             if value is missing:
                 value = ""
-            child.setText(value)
+            set_widget_text(child, value)
 
 
 def get_input_data(parent: QWidget):
-    """Get input data from ui elements that have the field property."""
+    """Gets input data from ui elements that have the field property."""
     entities = {}
     # for i in range(parent.count()):
     for widget in parent.findChildren(QWidget):
@@ -108,7 +132,7 @@ def get_input_data(parent: QWidget):
 
 
 def create_validation_ui(errors: Dict):
-    """Create ui for validation errors."""
+    """Creates ui for validation errors."""
     widgets = []
     for field_name, msg_list in errors.items():
         msg_list = flatten(msg_list)
@@ -122,7 +146,7 @@ def create_validation_ui(errors: Dict):
 
 
 def clear_layout(layout: QLayout) -> None:
-    """Remove all widgets from the given layout."""
+    """Removes all widgets from the given layout."""
     if layout is None:
         return
     while layout.count():
@@ -134,7 +158,7 @@ def clear_layout(layout: QLayout) -> None:
 
 
 def remove_from_listview(parent: QWidget, list_widget: QListWidget, msg: str = None):
-    """Remove the selected item from the given listview widget."""
+    """Removes the selected item from the given listview widget."""
     curr_row = list_widget.currentRow()
     if curr_row > -1:
         reply = QMessageBox.warning(
@@ -146,3 +170,12 @@ def remove_from_listview(parent: QWidget, list_widget: QListWidget, msg: str = N
             list_widget.takeItem(curr_row)
 
     return reply == QMessageBox.Yes, curr_row
+
+
+def select_file(filter: str, parent: QWidget = None, output_widget: QWidget = None):
+    """Opens a file dialog and set the selected file path into given widget's text."""
+    selected_file, _filter = QFileDialog.getOpenFileName(parent, "Browse", ".", filter)
+    if output_widget is not None:
+        output_widget.setText(selected_file)
+
+    return selected_file

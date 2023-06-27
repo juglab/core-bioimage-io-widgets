@@ -15,18 +15,10 @@ from core_bioimage_io_widgets.utils import nodes, schemas
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.preprocessing_widget import PreprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data, get_input_data,
+    enhance_widget, set_ui_data_from_node, get_input_data,
     create_validation_ui, remove_from_listview
 )
 from core_bioimage_io_widgets.utils import AXES_REGEX
-
-
-class ModelInput:
-    """Contains a InputTensor class accompanying with a numpy test input file."""
-
-    def __init__(self, test_input_file: str) -> None:
-        self.test_input_file = test_input_file
-        self.input_tensor = None
 
 
 class InputTensorWidget(QWidget):
@@ -34,14 +26,8 @@ class InputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, model_input: dict = None, input_names: list = [], parent=None):
+    def __init__(self, input_names: list = [], parent=None):
         super().__init__(parent)
-
-        self.input_tensor: nodes.model.InputTensor = None
-        self.test_input: str = None
-        if model_input is not None:
-            self.input_tensor = model_input.get('input_tensor')
-            self.test_input = model_input.get('test_input')
 
         self.input_tensor_schema = schemas.model.InputTensor()
         self.input_names = input_names  # to make this input has a unique name
@@ -134,8 +120,9 @@ class InputTensorWidget(QWidget):
             "data_type": "float32",
             "shape": self.input_shape,
             "axes": self.axes_textbox.text(),
-            "preprocessing": self.preprocessings
         }
+        if len(self.preprocessings) > 0:
+            input_data["preprocessing"] = self.preprocessings
         # validation
         errors = self.input_tensor_schema.validate(input_data)
         if errors:
@@ -148,10 +135,9 @@ class InputTensorWidget(QWidget):
             return
 
         # emit submit signal and send input data
-        input_tensor = self.input_tensor_schema.load(input_data)
         self.submit.emit({
             "test_input": self.test_input_textbox.text(),
-            "input_tensor": input_tensor
+            "input_tensor": input_data
         })
         self.close()
 

@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
 from core_bioimage_io_widgets.utils import nodes, schemas
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data, get_input_data,
+    enhance_widget, set_ui_data_from_dict, get_input_data,
     create_validation_ui
 )
 
@@ -19,15 +19,14 @@ class AuthorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, author: nodes.rdf.Author = None, parent=None):
+    def __init__(self, author_data: dict = None, parent=None):
         super().__init__(parent)
 
-        self.author = author
         self.author_schema = schemas.rdf.Author()
 
         self.create_ui()
-        if self.author is not None:
-            set_ui_data(self, self.author)
+        if author_data is not None:
+            set_ui_data_from_dict(self, author_data)
 
     def create_ui(self):
         """Creates ui for author's profile."""
@@ -86,8 +85,7 @@ class AuthorWidget(QWidget):
             return
 
         # emit submit signal and send author data
-        author = self.author_schema.load(author_data)
-        self.submit.emit(author)
+        self.submit.emit(author_data)
         self.close()
 
 

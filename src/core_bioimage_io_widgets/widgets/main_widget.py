@@ -19,7 +19,7 @@ from core_bioimage_io_widgets.utils import (
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, remove_from_listview,
-    get_input_data,
+    get_input_data, select_file,
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
@@ -36,7 +36,7 @@ class BioImageModelWidget(QWidget):
         self.model: nodes.model.Model = None
         self.model_schema = schemas.model.Model()
         self.authors: List[nodes.rdf.Author] = []
-        self.input_tensors: List[nodes.model.InputTensor] = []
+        self.input_tensors: List[dict] = []
         self.test_inputs: List[str] = []
 
         tabs = QTabWidget()
@@ -65,8 +65,10 @@ class BioImageModelWidget(QWidget):
         # collect part of data from ui-entries with a schema fields attached to them:
         model_data = get_input_data(self)
         # remove 'architecture' and 'architecture_sha256' fields from model_data direct properties.
-        del model_data['architecture']
-        del model_data['architecture_sha256']
+        if "architecture" in model_data.keys():
+            del model_data["architecture"]
+        if "architecture_sha256" in model_data.keys():
+            del model_data["architecture_sha256"]
         # set the model's weights data
         weights = {
                 self.weights_combo.currentText(): {
@@ -78,16 +80,29 @@ class BioImageModelWidget(QWidget):
             weights[self.weights_combo.currentText()]["architecture"] = self.model_source_textbox.text()
             weights[self.weights_combo.currentText()]["architecture_sha256"] = \
                 self.model_source_sha256_textbox.text()
-        # add more data
+        # add other required data
         model_data.update({
-            'type': 'model',
-            'format_version': FORMAT_VERSION,
-            'timestamp': dt.datetime.now().isoformat(),
-            'authors': self.authors,
-            'weights': weights,
-            'test_inputs': self.test_inputs,
-            'inputs': self.input_tensors,
+            "type": "model",
+            "format_version": FORMAT_VERSION,
+            "timestamp": dt.datetime.now().isoformat(),
+            "authors": self.authors,
+            "weights": weights,
+            "test_inputs": self.test_inputs,
+            "inputs": self.input_tensors,
+            "test_outputs": [
+                self.test_outputs_listview.item(i).text()
+                for i in range(self.test_outputs_listview.count())
+            ],
         })
+        # add optional data
+        if self.covers_listview.count() > 0:
+            model_data["covers"] = [
+                self.covers_listview.item(i).text()
+                for i in range(self.covers_listview.count())
+            ]
+        if len(self.tags_widget.tags) > 0:
+            model_data["tags"] = self.tags_widget.tags
+
         print(model_data)
 
         model_schema = schemas.model.Model()
@@ -121,7 +136,7 @@ class BioImageModelWidget(QWidget):
         doc_textbox.setReadOnly(True)
         doc_label, _ = enhance_widget(doc_textbox, "Documentation", self.model_schema.fields["documentation"])
         doc_button = QPushButton("Browse...")
-        doc_button.clicked.connect(lambda: self.select_file("Mark Down files (*.md)", doc_textbox))
+        doc_button.clicked.connect(lambda: select_file("Mark Down files (*.md)", self, doc_textbox))
         # model's weights
         weights_type_label = QLabel("Weights Format<sup>*</sup>:")
         self.weights_combo = QComboBox()
@@ -132,7 +147,7 @@ class BioImageModelWidget(QWidget):
         self.weights_textbox.setPlaceholderText("Select model's weights file")
         self.weights_textbox.setReadOnly(True)
         weights_button = QPushButton("Browse...")
-        weights_button.clicked.connect(lambda: self.select_file("*.*", self.weights_textbox))
+        weights_button.clicked.connect(lambda: select_file("*.*", self, self.weights_textbox))
         # weight format: pytorch_state_dict
         pytorch_state_dict_schema = schemas.model.PytorchStateDictWeightsEntry()
         self.model_source_textbox = QLineEdit()
@@ -235,22 +250,21 @@ class BioImageModelWidget(QWidget):
         covers_button_add_uri = QPushButton("Add from URI")
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
         covers_button_del = QPushButton("Remove")
-        covers_button_del.clicked.connect(
-            lambda: remove_from_listview(self.covers_listview,
-                                          "Are you sure you want to remove the selected cover?")
-        )
+        covers_button_del.clicked.connect(lambda: remove_from_listview(
+                self.covers_listview, "Are you sure you want to remove the selected cover?"
+        ))
         covers_btn_vbox = QVBoxLayout()
         covers_btn_vbox.addWidget(covers_button_add)
         covers_btn_vbox.addWidget(covers_button_add_uri)
         covers_btn_vbox.addWidget(covers_button_del)
         #
-        tags_widget = TagsInputWidget(predefined_tags=get_predefined_tags())
+        self.tags_widget = TagsInputWidget(predefined_tags=get_predefined_tags())
         #
         grid = QGridLayout()
         grid.addWidget(covers_label, 0, 0)
         grid.addWidget(self.covers_listview, 0, 1)
         grid.addLayout(covers_btn_vbox, 0, 2)
-        grid.addWidget(tags_widget, 1, 0, 1, 3, alignment=Qt.AlignTop | Qt.AlignLeft)
+        grid.addWidget(self.tags_widget, 1, 0, 1, 3, alignment=Qt.AlignTop | Qt.AlignLeft)
 
         frame = QFrame()
         frame.setFrameStyle(QFrame.NoFrame)
@@ -275,18 +289,18 @@ class BioImageModelWidget(QWidget):
 
     def show_author_form(self, edit=False):
         """Shows the author form to add a new or modify selected author."""
-        author: nodes.rdf.Author = None
+        author_data: dict = None
         if edit:
             curr_row = self.authors_listview.currentRow()
             if curr_row > -1:
-                author = self.authors[curr_row]
+                author_data = self.authors[curr_row]
             else:
                 return
         else:
             # new entry: unselect current row
             self.authors_listview.setCurrentRow(-1)
         # show the author's form
-        author_win = AuthorWidget(author=author)
+        author_win = AuthorWidget(author_data=author_data)
         author_win.setWindowModality(Qt.ApplicationModal)
         author_win.submit.connect(self.update_author)
         author_win.show()
@@ -294,7 +308,7 @@ class BioImageModelWidget(QWidget):
     def populate_authors_list(self):
         """Populates the authors' listview widget with the list of authors."""
         self.authors_listview.clear()
-        self.authors_listview.addItems(author.name for author in self.authors)
+        self.authors_listview.addItems(author["name"] for author in self.authors)
 
     def update_author(self, author: nodes.rdf.Author):
         """Modify or add new author to the list."""
@@ -308,19 +322,19 @@ class BioImageModelWidget(QWidget):
     def del_author(self):
         """Remove the selected author."""
         reply, del_row = remove_from_listview(
-            self.authors_listview, "Are you sure you want to remove the selected author?"
+            self, self.authors_listview, "Are you sure you want to remove the selected author?"
         )
         if reply:
             del self.authors[del_row]
             self.populate_authors_list()
 
-    def select_file(self, filter: str, output_widget: QWidget = None):
-        """Opens a file dialog and set the selected file into given widget's text."""
-        selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
-        if output_widget is not None:
-            output_widget.setText(selected_file)
+    # def select_file(self, filter: str, output_widget: QWidget = None):
+    #     """Opens a file dialog and set the selected file into given widget's text."""
+    #     selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
+    #     if output_widget is not None:
+    #         output_widget.setText(selected_file)
 
-        return selected_file
+    #     return selected_file
 
     def add_cover_images(self):
         """Select cover images by a file dialog, and add them to the Cover's listview."""
@@ -343,15 +357,14 @@ class BioImageModelWidget(QWidget):
 
     def select_add_npy_to_listview(self, list_widget: QListWidget):
         """Select a numpy file as a test input/outpu and add it to the listview."""
-        selected_file = self.select_file("Numpy File (*.npy)")
+        selected_file = select_file("Numpy File (*.npy)", parent=self)
         list_widget.addItem(selected_file)
 
     def show_input_form(self):
         """Shows the input form to add a new model's input."""
         # show the input's form
         input_win = InputTensorWidget(
-            model_input=None,
-            input_names=[item.name for item in self.input_tensors]
+            input_names=[item["name"] for item in self.input_tensors]
         )
         input_win.setWindowModality(Qt.ApplicationModal)
         input_win.submit.connect(self.update_input)
@@ -361,12 +374,12 @@ class BioImageModelWidget(QWidget):
         """Populates the inputs' listview widget with the list of model's inputs."""
         self.inputs_listview.clear()
         self.inputs_listview.addItems(
-            f"{in_tensor.name} ({in_test})"
+            f"{in_tensor['name']} ({in_test})"
             for in_tensor, in_test in zip(self.input_tensors, self.test_inputs)
         )
 
     def update_input(self, model_input: dict):
-        """Add a new model input to the list."""
+        """Add a new model's input to the list."""
         # model_input keys: 'test_input', 'input_tensor'
         self.input_tensors.append(model_input['input_tensor'])
         self.test_inputs.append(model_input['test_input'])

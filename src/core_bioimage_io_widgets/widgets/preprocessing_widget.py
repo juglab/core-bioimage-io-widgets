@@ -18,7 +18,7 @@ from core_bioimage_io_widgets.utils import (
 )
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data, get_input_data,
+    enhance_widget, set_ui_data_from_node, get_input_data,
     create_validation_ui, clear_layout
 )
 
@@ -28,7 +28,7 @@ class PreprocessingWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, preprocess: nodes.model.Preprocessing = None, parent: QWidget = None) -> None:
+    def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
         self.process_schema = None
 
