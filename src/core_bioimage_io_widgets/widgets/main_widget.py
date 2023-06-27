@@ -1,4 +1,5 @@
 import sys
+import datetime as dt
 from typing import List
 
 from qtpy.QtCore import Qt
@@ -17,7 +18,8 @@ from core_bioimage_io_widgets.utils import (
     FORMAT_VERSION, WEIGHT_FORMATS,
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, remove_from_list
+    enhance_widget, remove_from_listview,
+    get_input_data,
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
@@ -43,6 +45,7 @@ class BioImageModelWidget(QWidget):
         #
         load_button = QPushButton("&Load config")
         save_button = QPushButton("&Save config")
+        save_button.clicked.connect(self.save_specs)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(load_button)
         btn_hbox.addWidget(save_button)
@@ -59,19 +62,50 @@ class BioImageModelWidget(QWidget):
 
     def save_specs(self):
         """Save the user-entered model specs into a YAML file."""
-        pass
+        # collect part of data from ui-entries with a schema fields attached to them:
+        model_data = get_input_data(self)
+        # remove 'architecture' and 'architecture_sha256' fields from model_data direct properties.
+        del model_data['architecture']
+        del model_data['architecture_sha256']
+        # set the model's weights data
+        weights = {
+                self.weights_combo.currentText(): {
+                    'source': self.weights_textbox.text()
+                }
+        }
+        # on pytorch_state_dict format must add architecture & sha256 fields
+        if self.weights_combo.currentText() == "pytorch_state_dict":
+            weights[self.weights_combo.currentText()]["architecture"] = self.model_source_textbox.text()
+            weights[self.weights_combo.currentText()]["architecture_sha256"] = \
+                self.model_source_sha256_textbox.text()
+        # add more data
+        model_data.update({
+            'type': 'model',
+            'format_version': FORMAT_VERSION,
+            'timestamp': dt.datetime.now().isoformat(),
+            'authors': self.authors,
+            'weights': weights,
+            'test_inputs': self.test_inputs,
+            'inputs': self.input_tensors,
+        })
+        print(model_data)
+
+        model_schema = schemas.model.Model()
+        errors = model_schema.validate(model_data)
+        print(errors)
 
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
+        # model name
         name_textbox = QLineEdit()
         name_label, _ = enhance_widget(name_textbox, "Model Name", self.model_schema.fields["name"])
-        #
+        # model's description
         description_textbox = QPlainTextEdit()
         description_textbox.setFixedHeight(65)
         description_label, _ = enhance_widget(
             description_textbox, "Description", self.model_schema.fields["description"]
         )
-        #
+        # license
         license_combo = QComboBox()
         license_combo.addItems(get_spdx_licenses())
         license_combo.setEditable(True)
@@ -81,25 +115,37 @@ class BioImageModelWidget(QWidget):
         license_completer.setCaseSensitivity(Qt.CaseInsensitive)
         license_combo.setCompleter(license_completer)
         license_label, _ = enhance_widget(license_combo, "License", self.model_schema.fields["license"])
-        #
+        # documentation
         doc_textbox = QLineEdit()
         doc_textbox.setPlaceholderText("Select Documentation file (*.md)")
         doc_textbox.setReadOnly(True)
         doc_label, _ = enhance_widget(doc_textbox, "Documentation", self.model_schema.fields["documentation"])
         doc_button = QPushButton("Browse...")
         doc_button.clicked.connect(lambda: self.select_file("Mark Down files (*.md)", doc_textbox))
-        #
+        # model's weights
         weights_type_label = QLabel("Weights Format<sup>*</sup>:")
-        weights_combo = QComboBox()
-        weights_combo.addItems(WEIGHT_FORMATS)
+        self.weights_combo = QComboBox()
+        self.weights_combo.addItems(WEIGHT_FORMATS)
+        self.weights_combo.currentIndexChanged.connect(self.check_weight_format)
         weights_label = QLabel("Weights File<sup>*</sup>:")
-        weights_textbox = QLineEdit()
-        weights_textbox.setPlaceholderText("Select model's weights file")
-        weights_textbox.setReadOnly(True)
-        # weight_label, _ = enhance_widget(weight_textbox, "Weights", self.model_schema.fields["weights"])
+        self.weights_textbox = QLineEdit()
+        self.weights_textbox.setPlaceholderText("Select model's weights file")
+        self.weights_textbox.setReadOnly(True)
         weights_button = QPushButton("Browse...")
-        weights_button.clicked.connect(lambda: self.select_file("*.*", weights_textbox))
-        #
+        weights_button.clicked.connect(lambda: self.select_file("*.*", self.weights_textbox))
+        # weight format: pytorch_state_dict
+        pytorch_state_dict_schema = schemas.model.PytorchStateDictWeightsEntry()
+        self.model_source_textbox = QLineEdit()
+        self.model_src_label, _ = enhance_widget(
+            self.model_source_textbox, "Model Source Code",
+            pytorch_state_dict_schema.fields["architecture"]
+        )
+        self.model_source_sha256_textbox = QLineEdit()
+        self.model_src_sha256_label, _ = enhance_widget(
+            self.model_source_sha256_textbox, "Model Source Code SHA256",
+            pytorch_state_dict_schema.fields["architecture_sha256"]
+        )
+        # authors
         authors_label = QLabel("Authors<sup>*</sup>:")
         self.authors_listview = QListWidget()
         self.authors_listview.setFixedHeight(70)
@@ -130,16 +176,14 @@ class BioImageModelWidget(QWidget):
         #
         self.test_outputs_listview = QListWidget()
         self.test_outputs_listview.setFixedHeight(70)
-        test_outputs_label, _ = enhance_widget(
-            self.test_outputs_listview, "Test Outputs", self.model_schema.fields["test_outputs"]
-        )
+        test_outputs_label = QLabel("Test Output<sup>*</sup>:")
         test_outputs_button_add = QPushButton("Add")
         test_outputs_button_add.clicked.connect(
             lambda: self.select_add_npy_to_listview(self.test_outputs_listview)
         )
         test_outputs_button_del = QPushButton("Remove")
         test_outputs_button_del.clicked.connect(
-            lambda: remove_from_list(self.test_outputs_listview)
+            lambda: remove_from_listview(self.test_outputs_listview)
         )
         test_outputs_vbox = QVBoxLayout()
         test_outputs_vbox.addWidget(test_outputs_button_add)
@@ -156,19 +200,23 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(doc_textbox, 3, 1)
         required_layout.addWidget(doc_button, 3, 2)
         required_layout.addWidget(weights_type_label, 4, 0)
-        required_layout.addWidget(weights_combo, 4, 1)
+        required_layout.addWidget(self.weights_combo, 4, 1)
         required_layout.addWidget(weights_label, 5, 0)
-        required_layout.addWidget(weights_textbox, 5, 1)
+        required_layout.addWidget(self.weights_textbox, 5, 1)
         required_layout.addWidget(weights_button, 5, 2)
-        required_layout.addWidget(authors_label, 6, 0)
-        required_layout.addWidget(self.authors_listview, 6, 1)
-        required_layout.addLayout(authors_btn_vbox, 6, 2)
-        required_layout.addWidget(inputs_label, 7, 0)
-        required_layout.addWidget(self.inputs_listview, 7, 1)
-        required_layout.addLayout(self.inputs_btn_vbox, 7, 2)
-        required_layout.addWidget(test_outputs_label, 8, 0)
-        required_layout.addWidget(self.test_outputs_listview, 8, 1)
-        required_layout.addLayout(test_outputs_vbox, 8, 2)
+        required_layout.addWidget(self.model_src_label, 6, 0)
+        required_layout.addWidget(self.model_source_textbox, 6, 1)
+        required_layout.addWidget(self.model_src_sha256_label, 7, 0)
+        required_layout.addWidget(self.model_source_sha256_textbox, 7, 1)
+        required_layout.addWidget(authors_label, 8, 0)
+        required_layout.addWidget(self.authors_listview, 8, 1)
+        required_layout.addLayout(authors_btn_vbox, 8, 2)
+        required_layout.addWidget(inputs_label, 9, 0)
+        required_layout.addWidget(self.inputs_listview, 9, 1)
+        required_layout.addLayout(self.inputs_btn_vbox, 9, 2)
+        required_layout.addWidget(test_outputs_label, 10, 0)
+        required_layout.addWidget(self.test_outputs_listview, 10, 1)
+        required_layout.addLayout(test_outputs_vbox, 10, 2)
         required_layout.setRowStretch(-1, 1)
         #
         frame = QFrame()
@@ -188,7 +236,7 @@ class BioImageModelWidget(QWidget):
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
         covers_button_del = QPushButton("Remove")
         covers_button_del.clicked.connect(
-            lambda: remove_from_list(self.covers_listview,
+            lambda: remove_from_listview(self.covers_listview,
                                           "Are you sure you want to remove the selected cover?")
         )
         covers_btn_vbox = QVBoxLayout()
@@ -209,6 +257,21 @@ class BioImageModelWidget(QWidget):
         frame.setLayout(grid)
 
         return frame
+
+    def check_weight_format(self):
+        """Disable model source code/sha256 input boxes if the weight format is 'pytorch_state_dict'."""
+        if self.weights_combo.currentText() == "pytorch_state_dict":
+            self.model_source_textbox.setEnabled(True)
+            self.model_source_sha256_textbox.setEnabled(True)
+            self.model_src_label.setEnabled(True)
+            self.model_src_sha256_label.setEnabled(True)
+        else:
+            self.model_source_textbox.setText("")
+            self.model_source_textbox.setEnabled(False)
+            self.model_source_sha256_textbox.setText("")
+            self.model_source_sha256_textbox.setEnabled(False)
+            self.model_src_label.setEnabled(False)
+            self.model_src_sha256_label.setEnabled(False)
 
     def show_author_form(self, edit=False):
         """Shows the author form to add a new or modify selected author."""
@@ -244,7 +307,7 @@ class BioImageModelWidget(QWidget):
 
     def del_author(self):
         """Remove the selected author."""
-        reply, del_row = remove_from_list(
+        reply, del_row = remove_from_listview(
             self.authors_listview, "Are you sure you want to remove the selected author?"
         )
         if reply:
@@ -311,7 +374,7 @@ class BioImageModelWidget(QWidget):
 
     def del_input(self):
         """Remove the selected input."""
-        reply, del_row = remove_from_list(
+        reply, del_row = remove_from_listview(
             self, self.inputs_listview, "Are you sure you want to remove the selected input?"
         )
         if reply:

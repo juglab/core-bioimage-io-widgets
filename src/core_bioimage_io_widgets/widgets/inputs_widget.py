@@ -16,7 +16,7 @@ from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.preprocessing_widget import PreprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, set_ui_data, get_input_data,
-    create_validation_ui, remove_from_list
+    create_validation_ui, remove_from_listview
 )
 from core_bioimage_io_widgets.utils import AXES_REGEX
 
@@ -192,7 +192,7 @@ class InputTensorWidget(QWidget):
 
     def remove_preprocessing(self):
         """Remove selected preprocessing."""
-        reply, del_row = remove_from_list(
+        reply, del_row = remove_from_listview(
             self, self.preprocessing_listview, "Are you sure you want to remove the selected preprocessing?"
         )
         if reply:

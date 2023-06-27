@@ -32,9 +32,10 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    'qtpy',
-    'bioimageio.core',
-    'markdown',
+    "pyqt==5.15.7",
+    "qtpy",
+    "bioimageio.core",
+    "markdown",
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies

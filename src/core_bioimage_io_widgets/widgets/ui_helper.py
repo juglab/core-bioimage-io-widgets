@@ -5,7 +5,7 @@ import markdown
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QWidget, QComboBox, QLabel,
+    QWidget, QComboBox, QLabel, QPlainTextEdit,
     QLayout, QListWidget, QMessageBox
 )
 
@@ -33,6 +33,8 @@ def get_widget_text(widget: QWidget):
     """Returns current text inside the input widget."""
     if isinstance(widget, QComboBox):
         return widget.currentText()
+    elif isinstance(widget, QPlainTextEdit):
+        return widget.toPlainText()
 
     return widget.text()
 
@@ -131,8 +133,8 @@ def clear_layout(layout: QLayout) -> None:
             clear_layout(item.layout())
 
 
-def remove_from_list(parent: QWidget, list_widget: QListWidget, msg: str = None):
-    """Remove the selected item from the given list."""
+def remove_from_listview(parent: QWidget, list_widget: QListWidget, msg: str = None):
+    """Remove the selected item from the given listview widget."""
     curr_row = list_widget.currentRow()
     if curr_row > -1:
         reply = QMessageBox.warning(
