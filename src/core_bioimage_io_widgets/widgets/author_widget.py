@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
 from core_bioimage_io_widgets.utils import nodes, schemas
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_dict, get_input_data,
+    enhance_widget, set_ui_data_from_dict, get_ui_input_data,
     create_validation_ui
 )
 
@@ -77,7 +77,7 @@ class AuthorWidget(QWidget):
 
     def submit_author(self):
         """Validate and submit the entered author's profile."""
-        author_data = get_input_data(self)
+        author_data = get_ui_input_data(self)
         # validation
         errors = self.author_schema.validate(author_data)
         if errors:

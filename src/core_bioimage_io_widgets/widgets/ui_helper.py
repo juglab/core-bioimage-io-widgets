@@ -10,7 +10,9 @@ from qtpy.QtWidgets import (
     QFileDialog,
 )
 
-from core_bioimage_io_widgets.utils import schemas, nodes, flatten
+from core_bioimage_io_widgets.utils import (
+    schemas, nodes, flatten, safe_cast
+)
 
 
 def none_for_empty(text: str):
@@ -50,14 +52,6 @@ def set_widget_text(widget: QWidget, text: str):
         widget.setPlainText(text)
 
 
-def safe_cast(value, to_type, default=None):
-    """Casts value to given type safely."""
-    try:
-        return to_type(value)
-    except (ValueError, TypeError):
-        return default
-
-
 def convert_data(text: str, field_type: str):
     """Converts string data into field type."""
     if field_type.endswith('Float'):
@@ -75,7 +69,7 @@ def enhance_widget(
         field: Union[schemas.SharedBioImageIOSchema, Field] = None
         ):
     """Adds a label, and set some properties on the input widget."""
-    label_text = label_text.title()
+    label_text = label_text.replace("_", " ").title()
     label = QLabel(label_text + ":")
     if field is not None:
         input_widget.setProperty("field", field)
@@ -114,7 +108,7 @@ def set_ui_data_from_node(parent: QWidget, data: nodes.RawNode):
             set_widget_text(child, value)
 
 
-def get_input_data(parent: QWidget):
+def get_ui_input_data(parent: QWidget):
     """Gets input data from ui elements that have the field property."""
     entities = {}
     # for i in range(parent.count()):

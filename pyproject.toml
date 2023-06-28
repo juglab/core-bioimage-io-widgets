@@ -36,6 +36,7 @@ dependencies = [
     "qtpy",
     "bioimageio.core",
     "markdown",
+    "PyYAML"
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies

@@ -2,6 +2,7 @@ import sys
 import datetime as dt
 from typing import List
 
+import yaml
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QWidget, QApplication, 
@@ -19,12 +20,13 @@ from core_bioimage_io_widgets.utils import (
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, remove_from_listview,
-    get_input_data, select_file,
+    get_ui_input_data, select_file,
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
 from core_bioimage_io_widgets.widgets.tags_input_widget import TagsInputWidget
 from core_bioimage_io_widgets.widgets.inputs_widget import InputTensorWidget
+from core_bioimage_io_widgets.widgets.outputs_widget import OutputTensorWidget
 
 
 class BioImageModelWidget(QWidget):
@@ -38,6 +40,8 @@ class BioImageModelWidget(QWidget):
         self.authors: List[nodes.rdf.Author] = []
         self.input_tensors: List[dict] = []
         self.test_inputs: List[str] = []
+        self.output_tensors: List[dict] = []
+        self.test_outputs: List[str] = []
 
         tabs = QTabWidget()
         tabs.addTab(self.create_required_specs_ui(), "Required Fields")
@@ -63,7 +67,7 @@ class BioImageModelWidget(QWidget):
     def save_specs(self):
         """Save the user-entered model specs into a YAML file."""
         # collect part of data from ui-entries with a schema fields attached to them:
-        model_data = get_input_data(self)
+        model_data = get_ui_input_data(self)
         # remove 'architecture' and 'architecture_sha256' fields from model_data direct properties.
         if "architecture" in model_data.keys():
             del model_data["architecture"]
@@ -108,6 +112,11 @@ class BioImageModelWidget(QWidget):
         model_schema = schemas.model.Model()
         errors = model_schema.validate(model_data)
         print(errors)
+        if errors:
+            return
+
+        with open("./tmp_model.yaml", mode="w") as f:
+            yaml.dump(model_data, f, default_flow_style=False)
 
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
@@ -174,35 +183,28 @@ class BioImageModelWidget(QWidget):
         authors_btn_vbox.addWidget(authors_button_add)
         authors_btn_vbox.addWidget(authors_button_edit)
         authors_btn_vbox.addWidget(authors_button_del)
-        #
+        # inputs
         inputs_label = QLabel("Inputs<sup>*</sup>:")
         self.inputs_listview = QListWidget()
         self.inputs_listview.setFixedHeight(70)
         inputs_button_add = QPushButton("Add")
         inputs_button_add.clicked.connect(lambda: self.show_input_form())
-        # inputs_button_edit = QPushButton("Edit")
-        # inputs_button_edit.clicked.connect(lambda: self.show_input_form())
         inputs_button_del = QPushButton("Remove")
         inputs_button_del.clicked.connect(self.del_input)
         self.inputs_btn_vbox = QVBoxLayout()
         self.inputs_btn_vbox.addWidget(inputs_button_add)
-        # self.inputs_btn_vbox.addWidget(inputs_button_edit)
         self.inputs_btn_vbox.addWidget(inputs_button_del)
-        #
-        self.test_outputs_listview = QListWidget()
-        self.test_outputs_listview.setFixedHeight(70)
-        test_outputs_label = QLabel("Test Output<sup>*</sup>:")
-        test_outputs_button_add = QPushButton("Add")
-        test_outputs_button_add.clicked.connect(
-            lambda: self.select_add_npy_to_listview(self.test_outputs_listview)
-        )
-        test_outputs_button_del = QPushButton("Remove")
-        test_outputs_button_del.clicked.connect(
-            lambda: remove_from_listview(self.test_outputs_listview)
-        )
-        test_outputs_vbox = QVBoxLayout()
-        test_outputs_vbox.addWidget(test_outputs_button_add)
-        test_outputs_vbox.addWidget(test_outputs_button_del)
+        # outputs
+        outputs_label = QLabel("Outputs<sup>*</sup>:")
+        self.outputs_listview = QListWidget()
+        self.outputs_listview.setFixedHeight(70)
+        outputs_button_add = QPushButton("Add")
+        outputs_button_add.clicked.connect(lambda: self.show_output_form())
+        outputs_button_del = QPushButton("Remove")
+        outputs_button_del.clicked.connect(self.del_output)
+        self.outputs_btn_vbox = QVBoxLayout()
+        self.outputs_btn_vbox.addWidget(outputs_button_add)
+        self.outputs_btn_vbox.addWidget(outputs_button_del)
         #
         required_layout = QGridLayout()
         required_layout.addWidget(name_label, 0, 0)
@@ -229,9 +231,9 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(inputs_label, 9, 0)
         required_layout.addWidget(self.inputs_listview, 9, 1)
         required_layout.addLayout(self.inputs_btn_vbox, 9, 2)
-        required_layout.addWidget(test_outputs_label, 10, 0)
-        required_layout.addWidget(self.test_outputs_listview, 10, 1)
-        required_layout.addLayout(test_outputs_vbox, 10, 2)
+        required_layout.addWidget(outputs_label, 10, 0)
+        required_layout.addWidget(self.outputs_listview, 10, 1)
+        required_layout.addLayout(self.outputs_btn_vbox, 10, 2)
         required_layout.setRowStretch(-1, 1)
         #
         frame = QFrame()
@@ -362,7 +364,6 @@ class BioImageModelWidget(QWidget):
 
     def show_input_form(self):
         """Shows the input form to add a new model's input."""
-        # show the input's form
         input_win = InputTensorWidget(
             input_names=[item["name"] for item in self.input_tensors]
         )
@@ -394,6 +395,40 @@ class BioImageModelWidget(QWidget):
             del self.input_tensors[del_row]
             del self.test_inputs[del_row]
             self.populate_inputs_list()
+
+    def show_output_form(self):
+        """Shows the output form to add a new model's output."""
+        output_win = OutputTensorWidget(
+            output_names=[item["name"] for item in self.output_tensors]
+        )
+        output_win.setWindowModality(Qt.ApplicationModal)
+        output_win.submit.connect(self.update_output)
+        output_win.show()
+
+    def populate_outputs_list(self):
+        """Populates the outputs' listview widget with the list of model's outputs."""
+        self.outputs_listview.clear()
+        self.outputs_listview.addItems(
+            f"{out_tensor['name']} ({out_test})"
+            for out_tensor, out_test in zip(self.output_tensors, self.test_outputs)
+        )
+
+    def update_output(self, model_output: dict):
+        """Add a new model's output to the list."""
+        # model_output keys: 'test_output', 'output_tensor'
+        self.output_tensors.append(model_output['output_tensor'])
+        self.test_outputs.append(model_output['test_output'])
+        self.populate_outputs_list()
+
+    def del_output(self):
+        """Remove the selected output."""
+        reply, del_row = remove_from_listview(
+            self, self.outputs_listview, "Are you sure you want to remove the selected output?"
+        )
+        if reply:
+            del self.output_tensors[del_row]
+            del self.test_outputs[del_row]
+            self.populate_outputs_list()
 
 
 if __name__ == "__main__":

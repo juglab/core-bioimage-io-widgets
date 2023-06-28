@@ -14,17 +14,17 @@ from marshmallow import missing
 
 from core_bioimage_io_widgets.utils import (
     schemas, nodes,
-    PREPROCESSING_TYPES
+    POSTPROCESSING_TYPES
 )
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_node, get_ui_input_data,
+    enhance_widget, get_ui_input_data,
     create_validation_ui, clear_layout
 )
 
 
-class PreprocessingWidget(QWidget):
-    """Input Preprocessing widget."""
+class PostprocessingWidget(QWidget):
+    """Input Postprocessing widget."""
 
     submit = Signal(object, name="submit")
 
@@ -32,11 +32,11 @@ class PreprocessingWidget(QWidget):
         super().__init__(parent)
         self.process_schema = None
 
-        process_label = QLabel("Preprocess:")
+        process_label = QLabel("Postprocess:")
         self.process_description_label = QLabel()
         self.process_description_label.setWordWrap(True)
         self.process_combo = QComboBox()
-        self.process_combo.addItems(PREPROCESSING_TYPES)
+        self.process_combo.addItems(POSTPROCESSING_TYPES)
         self.process_combo.currentIndexChanged.connect(self.select_preprocessing)
         #
         self.fields_grid = QGridLayout()
@@ -68,9 +68,9 @@ class PreprocessingWidget(QWidget):
         self.select_preprocessing()
 
     def select_preprocessing(self):
-        """Create input fields based on selected preprocessing parameters."""
+        """Create input fields based on selected postprocessing parameters."""
         class_name = self.process_combo.currentText()
-        process_type_class = getattr(schemas.model.Preprocessing, class_name, None)
+        process_type_class = getattr(schemas.model.Postprocessing, class_name, None)
         assert process_type_class is not None, "process_type_class is None!"
 
         # create ui for the selected preprocessing type's parameters:
@@ -111,11 +111,11 @@ class PreprocessingWidget(QWidget):
             self.validation_widget.update_content(create_validation_ui(errors))
         else:
             # submit preprocess data
-            preprocess = schemas.model.Preprocessing().load({
+            postprocess = schemas.model.Postprocessing().load({
                 'name': self.process_combo.currentText(),
                 'kwargs': process_data
             })
-            self.submit.emit(preprocess)
+            self.submit.emit(postprocess)
             self.close()
 
 
@@ -123,6 +123,6 @@ if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)
-    win = PreprocessingWidget()
+    win = PostprocessingWidget()
     win.show()
     sys.exit(app.exec_())

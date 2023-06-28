@@ -15,14 +15,14 @@ from core_bioimage_io_widgets.utils import nodes, schemas
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.preprocessing_widget import PreprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_node, get_input_data,
+    enhance_widget, set_ui_data_from_node, get_ui_input_data,
     create_validation_ui, remove_from_listview
 )
 from core_bioimage_io_widgets.utils import AXES_REGEX
 
 
 class InputTensorWidget(QWidget):
-    """Model's Inputs form widget."""
+    """Model's Input form widget."""
 
     submit = Signal(object, name="submit")
 

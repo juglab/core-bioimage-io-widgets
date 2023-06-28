@@ -5,3 +5,6 @@ from .validation_widget import ValidationWidget
 from .tags_input_widget import TagsInputWidget
 from .inputs_widget import InputTensorWidget
 from .preprocessing_widget import PreprocessingWidget
+from .outputs_widget import OutputTensorWidget
+from .postprocessing_widget import PostprocessingWidget
+
