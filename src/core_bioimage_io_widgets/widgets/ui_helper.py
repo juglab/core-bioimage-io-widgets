@@ -1,3 +1,4 @@
+import json
 from typing import List, Tuple, Dict, Union, Any
 from marshmallow import missing
 from marshmallow.fields import Field
@@ -125,7 +126,7 @@ def get_ui_input_data(parent: QWidget):
     return entities
 
 
-def create_validation_ui(errors: Dict):
+def create_validation_ui0(errors: Dict):
     """Creates ui for validation errors."""
     widgets = []
     for field_name, msg_list in errors.items():
@@ -135,6 +136,18 @@ def create_validation_ui(errors: Dict):
         label.setStyleSheet("color: rgb(240, 40, 90)")
         label.setAlignment(Qt.AlignCenter)
         widgets.append(label)
+
+    return widgets
+
+
+def create_validation_ui(errors: Dict):
+    """Creates ui for validation errors."""
+    widgets = []
+    errors = json.dumps(errors, indent=2)
+    label = QLabel(errors)
+    label.setStyleSheet("color: rgb(240, 40, 90)")
+    label.setAlignment(Qt.AlignJustify)
+    widgets.append(label)
 
     return widgets
 
@@ -168,8 +181,15 @@ def remove_from_listview(parent: QWidget, list_widget: QListWidget, msg: str = N
 
 def select_file(filter: str, parent: QWidget = None, output_widget: QWidget = None):
     """Opens a file dialog and set the selected file path into given widget's text."""
-    selected_file, _filter = QFileDialog.getOpenFileName(parent, "Browse", ".", filter)
+    selected_file, _filter = QFileDialog.getOpenFileName(parent, "BioImageIO", ".", filter)
     if output_widget is not None:
         output_widget.setText(selected_file)
 
     return selected_file
+
+
+def save_file_as(filter: str, default_dir: str = None, parent: QWidget = None):
+    """Shows a save file dialog."""
+    save_file, _ = QFileDialog.getSaveFileName(parent, "BioImageIO", default_dir, filter)
+
+    return save_file

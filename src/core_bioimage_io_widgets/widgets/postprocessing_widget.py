@@ -62,8 +62,8 @@ class PostprocessingWidget(QWidget):
 
         self.setLayout(grid)
         self.setMaximumWidth(470)
-        self.setMinimumHeight(360)
-        self.setWindowTitle("Preprocessing Parameters")
+        self.setMinimumHeight(380)
+        self.setWindowTitle("Postprocessing Parameters")
 
         self.select_preprocessing()
 

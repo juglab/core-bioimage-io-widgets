@@ -45,3 +45,12 @@ class ValidationWidget(QtWidgets.QWidget):
         """Clears the content area."""
         for i in reversed(range(self.content_layout.count())):
             self.content_layout.itemAt(i).widget().deleteLater()
+
+
+if __name__ == "__main__":
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    win = ValidationWidget()
+    win.show()
+    sys.exit(app.exec_())

@@ -21,12 +21,14 @@ from core_bioimage_io_widgets.utils import (
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, remove_from_listview,
     get_ui_input_data, select_file,
+    create_validation_ui, save_file_as
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
 from core_bioimage_io_widgets.widgets.tags_input_widget import TagsInputWidget
 from core_bioimage_io_widgets.widgets.inputs_widget import InputTensorWidget
 from core_bioimage_io_widgets.widgets.outputs_widget import OutputTensorWidget
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class BioImageModelWidget(QWidget):
@@ -93,10 +95,8 @@ class BioImageModelWidget(QWidget):
             "weights": weights,
             "test_inputs": self.test_inputs,
             "inputs": self.input_tensors,
-            "test_outputs": [
-                self.test_outputs_listview.item(i).text()
-                for i in range(self.test_outputs_listview.count())
-            ],
+            "test_outputs": self.test_outputs,
+            "outputs": self.output_tensors,
         })
         # add optional data
         if self.covers_listview.count() > 0:
@@ -106,17 +106,20 @@ class BioImageModelWidget(QWidget):
             ]
         if len(self.tags_widget.tags) > 0:
             model_data["tags"] = self.tags_widget.tags
-
-        print(model_data)
-
+        # validate the model data
         model_schema = schemas.model.Model()
         errors = model_schema.validate(model_data)
-        print(errors)
         if errors:
+            validation_win = ValidationWidget()
+            validation_win.update_content(create_validation_ui(errors))
+            validation_win.setMinimumHeight(300)
+            validation_win.show()
             return
 
-        with open("./tmp_model.yaml", mode="w") as f:
-            yaml.dump(model_data, f, default_flow_style=False)
+        dest_file = save_file_as("Yaml file (*.yaml)", f"./{model_data['name'].replace(' ', '_')}.yaml", self)
+        if dest_file:
+            with open(dest_file, mode="w") as f:
+                yaml.dump(model_data, f, default_flow_style=False)
 
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
@@ -329,14 +332,6 @@ class BioImageModelWidget(QWidget):
         if reply:
             del self.authors[del_row]
             self.populate_authors_list()
-
-    # def select_file(self, filter: str, output_widget: QWidget = None):
-    #     """Opens a file dialog and set the selected file into given widget's text."""
-    #     selected_file, _filter = QFileDialog.getOpenFileName(self, "Browse", ".", filter)
-    #     if output_widget is not None:
-    #         output_widget.setText(selected_file)
-
-    #     return selected_file
 
     def add_cover_images(self):
         """Select cover images by a file dialog, and add them to the Cover's listview."""

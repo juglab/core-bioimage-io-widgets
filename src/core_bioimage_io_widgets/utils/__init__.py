@@ -22,7 +22,7 @@ def flatten(nested):
         return nested
     if isinstance(nested, dict):
         nested = list(nested.values())
-    if isinstance(nested[0], list):
+    if isinstance(nested[0], list) or isinstance(nested[0], dict):
         return flatten(nested[0]) + flatten(nested[1:])
     return nested[:1] + flatten(nested[1:])
 
