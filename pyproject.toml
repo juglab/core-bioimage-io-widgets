@@ -32,7 +32,7 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    "pyqt==5.15.7",
+    "PyQt5",  # TODO: right way to install pyqt5 on mac(conda install -c conda-forge pyqt)
     "qtpy",
     "bioimageio.core",
     "markdown",
