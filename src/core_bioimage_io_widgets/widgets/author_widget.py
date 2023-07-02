@@ -80,6 +80,9 @@ class AuthorWidget(QWidget):
         author_data = get_ui_input_data(self)
         # validation
         errors = self.author_schema.validate(author_data)
+        # NOTE: handling empty string
+        if len(self.name_textbox.text().strip()) == 0:
+            errors["name"] = ["Author's name is required."]
         if errors:
             self.validation_widget.update_content(create_validation_ui(errors))
             return

@@ -37,8 +37,9 @@ class SingleInputWidget(QWidget):
     def submit_input(self):
         """Emit the submit event with the input text as data."""
         text_input = self.input_textbox.text().strip()
-        self.submit.emit(text_input)
-        self.close()
+        if len(text_input) > 0:
+            self.submit.emit(text_input)
+            self.close()
 
 
 
