@@ -113,6 +113,7 @@ class BioImageModelWidget(QWidget):
         if dest_file:
             with open(dest_file, mode="w") as f:
                 yaml.safe_dump(model_data, f, default_flow_style=False)
+            QMessageBox.information(self, "BioImage.io", "Model data saved successfully.")
 
     def load_from_file(self):
         """Open a file dialog to select model yaml file."""

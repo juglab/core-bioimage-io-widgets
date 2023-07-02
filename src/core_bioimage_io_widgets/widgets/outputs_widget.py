@@ -5,17 +5,20 @@ from qtpy.QtWidgets import (
     QWidget, QApplication,
     QGridLayout, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QListWidget,
-    QFileDialog, QGroupBox, QLabel
+    QFileDialog, QGroupBox, QLabel, QComboBox
 )
 from qtpy.QtGui import QRegExpValidator
 
 import numpy as np
 
-from core_bioimage_io_widgets.utils import nodes, schemas, safe_cast
+from core_bioimage_io_widgets.utils import (
+    nodes, schemas, safe_cast,
+    OUTPUT_TYPES
+)
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.postprocessing_widget import PostprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_node, get_ui_input_data,
+    enhance_widget,
     create_validation_ui, remove_from_listview
 )
 from core_bioimage_io_widgets.utils import AXES_REGEX
@@ -61,7 +64,9 @@ class OutputTensorWidget(QWidget):
         self.shape_textbox = QLineEdit()
         self.shape_textbox.setMinimumWidth(180)
         self.shape_textbox.setReadOnly(True)
-        shape_label, _ = enhance_widget(self.shape_textbox, "Shape", self.output_tensor_schema.fields["shape"])
+        shape_label, _ = enhance_widget(
+            self.shape_textbox, "Shape", self.output_tensor_schema.fields["shape"]
+        )
         #
         self.axes_textbox = QLineEdit()
         self.axes_textbox.setMinimumWidth(180)
@@ -71,7 +76,16 @@ class OutputTensorWidget(QWidget):
         # halo
         self.halo_textbox = QLineEdit()
         self.halo_textbox.setMinimumWidth(180)
-        halo_label, _ = enhance_widget(self.halo_textbox, "Halo", self.output_tensor_schema.fields["halo"])
+        halo_label, _ = enhance_widget(
+            self.halo_textbox, "Halo", self.output_tensor_schema.fields["halo"]
+        )
+        # data type
+        self.data_type_combo = QComboBox()
+        self.data_type_combo.setMinimumWidth(180)
+        self.data_type_combo.addItems(OUTPUT_TYPES)
+        data_type_label, _ = enhance_widget(
+            self.data_type_combo, "Data Type", self.output_tensor_schema.fields["data_type"]
+        )
         #
         postprocessing_label = QLabel("Postprocessing:")
         self.postprocessing_listview = QListWidget()
@@ -104,11 +118,13 @@ class OutputTensorWidget(QWidget):
         grid.addWidget(self.axes_textbox, 2, 1, alignment=Qt.AlignLeft)
         grid.addWidget(halo_label, 3, 0)
         grid.addWidget(self.halo_textbox, 3, 1, alignment=Qt.AlignLeft)
-        grid.addWidget(postprocessing_label, 4, 0, alignment=Qt.AlignTop)
-        grid.addWidget(self.postprocessing_listview, 4, 1, alignment=Qt.AlignTop)
-        grid.addLayout(postprocessing_btn_vbox, 4, 2)
-        grid.addWidget(self.validation_widget, 5, 0, 1, 3)
-        grid.addLayout(form_btn_hbox, 6, 1, 1, 2)
+        grid.addWidget(data_type_label, 4, 0)
+        grid.addWidget(self.data_type_combo, 4, 1, alignment=Qt.AlignLeft)
+        grid.addWidget(postprocessing_label, 5, 0, alignment=Qt.AlignTop)
+        grid.addWidget(self.postprocessing_listview, 5, 1, alignment=Qt.AlignTop)
+        grid.addLayout(postprocessing_btn_vbox, 5, 2)
+        grid.addWidget(self.validation_widget, 6, 0, 1, 3)
+        grid.addLayout(form_btn_hbox, 7, 1, 1, 2)
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 6)
 
@@ -131,8 +147,13 @@ class OutputTensorWidget(QWidget):
         output_tensor_data: dict = output_data["output_tensor"]
         self.name_textbox.setText(output_tensor_data["name"])
         self.axes_textbox.setText(output_tensor_data["axes"])
-        self.halo_textbox.setText(",".join(str(h) for h in output_tensor_data["halo"]))
-        for process in output_tensor_data["postprocessing"]:
+        self.halo_textbox.setText(
+            ",".join(str(h) for h in output_tensor_data.get("halo", []))
+        )
+        index = self.data_type_combo.findText(output_tensor_data.get("data_type", "float32"))
+        if index > -1:
+            self.data_type_combo.setCurrentIndex(index)
+        for process in output_tensor_data.get("postprocessing", []):
             self.add_postprocessing(process)
 
     def submit_output_tensor(self):
@@ -145,6 +166,7 @@ class OutputTensorWidget(QWidget):
         }
         if len(self.halo_textbox.text()) > 0:
             output_data["halo"] = [safe_cast(s, int) for s in self.halo_textbox.text().split(",")]
+        output_data["data_type"] = self.data_type_combo.currentText()
         if len(self.postprocessings) > 0:
             output_data["postprocessing"] = self.postprocessings
         # validation
