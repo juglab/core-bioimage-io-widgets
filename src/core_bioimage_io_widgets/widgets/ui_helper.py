@@ -109,7 +109,7 @@ def set_ui_data_from_node(parent: QWidget, data: nodes.RawNode):
             set_widget_text(child, value)
 
 
-def get_ui_input_data(parent: QWidget):
+def get_ui_input_data(parent: QWidget) -> dict:
     """Gets input data from ui elements that have the field property."""
     entities = {}
     # for i in range(parent.count()):

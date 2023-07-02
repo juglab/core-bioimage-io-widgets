@@ -16,12 +16,13 @@ from qtpy.QtWidgets import (
 from core_bioimage_io_widgets.utils import (
     nodes, schemas,
     get_spdx_licenses, get_predefined_tags,
-    FORMAT_VERSION, WEIGHT_FORMATS,
+    FORMAT_VERSION, WEIGHT_FORMATS, PYTORCH_STATE_DICT
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, remove_from_listview,
     get_ui_input_data, select_file,
-    create_validation_ui, save_file_as
+    create_validation_ui, save_file_as,
+    set_ui_data_from_dict, set_widget_text
 )
 from core_bioimage_io_widgets.widgets.author_widget import AuthorWidget
 from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidget
@@ -32,14 +33,14 @@ from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class BioImageModelWidget(QWidget):
-    """A QT widget for bioimage.io model specs."""
+    """A QT widget for bioimage.io model specifications."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.model: nodes.model.Model = None
         self.model_schema = schemas.model.Model()
-        self.authors: List[nodes.rdf.Author] = []
+        self.authors: List[dict] = []
         self.input_tensors: List[dict] = []
         self.test_inputs: List[str] = []
         self.output_tensors: List[dict] = []
@@ -50,6 +51,7 @@ class BioImageModelWidget(QWidget):
         tabs.addTab(self.create_other_spec_ui(), "Optional Fields")
         #
         load_button = QPushButton("&Load config")
+        load_button.clicked.connect(self.load_specs)
         save_button = QPushButton("&Save config")
         save_button.clicked.connect(self.save_specs)
         btn_hbox = QHBoxLayout()
@@ -62,9 +64,6 @@ class BioImageModelWidget(QWidget):
 
         self.setLayout(grid)
         self.setWindowTitle("Bioimage.io Model Specification")
-
-        self.populate_authors_list()
-        self.populate_inputs_list()
 
     def save_specs(self):
         """Save the user-entered model specs into a YAML file."""
@@ -82,7 +81,7 @@ class BioImageModelWidget(QWidget):
                 }
         }
         # on pytorch_state_dict format must add architecture & sha256 fields
-        if self.weights_combo.currentText() == "pytorch_state_dict":
+        if self.weights_combo.currentText() == PYTORCH_STATE_DICT:
             weights[self.weights_combo.currentText()]["architecture"] = self.model_source_textbox.text()
             weights[self.weights_combo.currentText()]["architecture_sha256"] = \
                 self.model_source_sha256_textbox.text()
@@ -119,7 +118,42 @@ class BioImageModelWidget(QWidget):
         dest_file = save_file_as("Yaml file (*.yaml)", f"./{model_data['name'].replace(' ', '_')}.yaml", self)
         if dest_file:
             with open(dest_file, mode="w") as f:
-                yaml.dump(model_data, f, default_flow_style=False)
+                yaml.safe_dump(model_data, f, default_flow_style=False)
+
+    def load_specs(self):
+        """Load the model's specifications from a yaml file."""
+        selected_yml = select_file("Yaml file (*.yaml)", self)
+        with open(selected_yml) as f:
+            model_data = yaml.safe_load(f)
+        print(model_data)
+        # TODO: model_data should be valid specs
+        # set ui data
+        set_ui_data_from_dict(self, model_data)  # handles basic direct inputs
+        # weights
+        weight_type = list(model_data["weights"].keys())[0]
+        weight_specs = model_data["weights"][weight_type]
+        set_widget_text(self.weights_combo, weight_type)
+        self.weights_textbox.setText(weight_specs["source"])
+        if weight_type == PYTORCH_STATE_DICT:
+            self.model_source_textbox.setText(weight_specs["architecture"])
+            self.model_source_sha256_textbox.setText(weight_specs.get("architecture_sha256", ""))
+        # authors
+        self.authors = model_data["authors"]
+        self.populate_authors_list()
+        # inputs
+        self.input_tensors = model_data["inputs"]
+        self.test_inputs = model_data["test_inputs"]
+        self.populate_inputs_list()
+        # outputs
+        self.output_tensors = model_data["outputs"]
+        self.test_outputs = model_data["test_outputs"]
+        self.populate_outputs_list()
+        # covers
+        for cover in model_data.get("covers", []):
+            self.covers_listview.addItem(cover)
+        # tags
+        self.tags_widget.tags = model_data["tags"]
+        self.tags_widget.refresh_tags()
 
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
@@ -160,7 +194,7 @@ class BioImageModelWidget(QWidget):
         self.weights_textbox.setReadOnly(True)
         weights_button = QPushButton("Browse...")
         weights_button.clicked.connect(lambda: select_file("*.*", self, self.weights_textbox))
-        # weight format: pytorch_state_dict
+        # if weight format selected as pytorch_state_dict
         pytorch_state_dict_schema = schemas.model.PytorchStateDictWeightsEntry()
         self.model_source_textbox = QLineEdit()
         self.model_src_label, _ = enhance_widget(
@@ -279,7 +313,7 @@ class BioImageModelWidget(QWidget):
 
     def check_weight_format(self):
         """Disable model source code/sha256 input boxes if the weight format is 'pytorch_state_dict'."""
-        if self.weights_combo.currentText() == "pytorch_state_dict":
+        if self.weights_combo.currentText() == PYTORCH_STATE_DICT:
             self.model_source_textbox.setEnabled(True)
             self.model_source_sha256_textbox.setEnabled(True)
             self.model_src_label.setEnabled(True)
@@ -315,13 +349,13 @@ class BioImageModelWidget(QWidget):
         self.authors_listview.clear()
         self.authors_listview.addItems(author["name"] for author in self.authors)
 
-    def update_author(self, author: nodes.rdf.Author):
+    def update_author(self, author_data: dict):
         """Modify or add new author to the list."""
         curr_row = self.authors_listview.currentRow()
         if curr_row > -1:
-            self.authors[curr_row] = author
+            self.authors[curr_row] = author_data
         else:
-            self.authors.append(author)
+            self.authors.append(author_data)
         self.populate_authors_list()
 
     def del_author(self):

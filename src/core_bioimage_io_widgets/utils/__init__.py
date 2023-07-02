@@ -14,6 +14,7 @@ PREPROCESSING_TYPES = get_args(model.PreprocessingName)
 POSTPROCESSING_TYPES = get_args(model.PostprocessingName)
 PROCESSING_MODES = {mode: ProcMode.explanations[mode] for mode in ProcMode.all_modes}
 WEIGHT_FORMATS = get_args(model.WeightsFormat)
+PYTORCH_STATE_DICT = "pytorch_state_dict"
 
 
 def flatten(nested):
