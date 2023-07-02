@@ -14,9 +14,10 @@ from qtpy.QtWidgets import (
 )
 
 from core_bioimage_io_widgets.utils import (
+    FORMAT_VERSION, WEIGHT_FORMATS, PYTORCH_STATE_DICT,
     nodes, schemas,
     get_spdx_licenses, get_predefined_tags,
-    FORMAT_VERSION, WEIGHT_FORMATS, PYTORCH_STATE_DICT
+    build_model_zip
 )
 from core_bioimage_io_widgets.widgets.ui_helper import (
     enhance_widget, remove_from_listview,
@@ -50,13 +51,16 @@ class BioImageModelWidget(QWidget):
         tabs.addTab(self.create_required_specs_ui(), "Required Fields")
         tabs.addTab(self.create_other_spec_ui(), "Optional Fields")
         #
-        load_button = QPushButton("&Load config")
+        load_button = QPushButton("&Load Config")
         load_button.clicked.connect(self.load_from_file)
-        save_button = QPushButton("&Save config")
+        save_button = QPushButton("&Save Config")
         save_button.clicked.connect(self.save_specs)
+        build_button = QPushButton("&Build Model")
+        build_button.clicked.connect(self.build_model)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(load_button)
         btn_hbox.addWidget(save_button)
+        btn_hbox.addWidget(build_button)
 
         grid = QGridLayout()
         grid.addWidget(tabs, 0, 0)
@@ -66,7 +70,27 @@ class BioImageModelWidget(QWidget):
         self.setWindowTitle("Bioimage.io Model Specification")
 
     def save_specs(self):
-        """Save the user-entered model specs into a YAML file."""
+        """Save the model specs into a YAML file."""
+        model_data = self.collect_specs()
+        if model_data:
+            dest_file = save_file_as(
+                "Yaml file (*.yaml)", f"./{model_data['name'].replace(' ', '_')}.yaml", self
+            )
+            if dest_file:
+                with open(dest_file, mode="w") as f:
+                    yaml.safe_dump(model_data, f, default_flow_style=False)
+                QMessageBox.information(self, "BioImage.io", "Model data saved successfully.")
+
+    def load_from_file(self):
+        """Open a file dialog to select model yaml file."""
+        selected_yml = select_file("Yaml file (*.yaml)", self)
+        if selected_yml is not None:
+            with open(selected_yml) as f:
+                model_data = yaml.safe_load(f)
+                self.load_specs(model_data)
+
+    def collect_specs(self) -> dict:
+        """Collect and validate model specifications from ui."""
         # collect part of data from ui-entries with a schema fields attached to them:
         model_data = get_ui_input_data(self)
         # remove 'architecture' and 'architecture_sha256' fields from model_data direct properties.
@@ -106,25 +130,13 @@ class BioImageModelWidget(QWidget):
         if len(self.tags_widget.tags) > 0:
             model_data["tags"] = self.tags_widget.tags
         # validate the model data
-        if not self.is_valid(model_data):
-            return
+        if self.is_valid(model_data):
+            return model_data
 
-        dest_file = save_file_as("Yaml file (*.yaml)", f"./{model_data['name'].replace(' ', '_')}.yaml", self)
-        if dest_file:
-            with open(dest_file, mode="w") as f:
-                yaml.safe_dump(model_data, f, default_flow_style=False)
-            QMessageBox.information(self, "BioImage.io", "Model data saved successfully.")
-
-    def load_from_file(self):
-        """Open a file dialog to select model yaml file."""
-        selected_yml = select_file("Yaml file (*.yaml)", self)
-        if selected_yml is not None:
-            with open(selected_yml) as f:
-                model_data = yaml.safe_load(f)
-                self.load_specs(model_data)
+        return None
 
     def load_specs(self, model_data: dict):
-        """Load the model's specifications from a yaml file."""
+        """Fill ui with the the given model's specifications (model_data)."""
         # model_data should be a valid specs
         if not self.is_valid(model_data):
             return
@@ -155,6 +167,19 @@ class BioImageModelWidget(QWidget):
         # tags
         self.tags_widget.tags = model_data["tags"]
         self.tags_widget.refresh_tags()
+
+    def build_model(self):
+        """Build bioimage model zip file."""
+        model_data = self.collect_specs()
+        if model_data is None:
+            return
+
+        dest_file = save_file_as(
+            "Zip file (*.zip)", f"./{model_data['name'].replace(' ', '_')}.zip", self
+        )
+        if dest_file:
+            # buil model zip file
+            build_model_zip(model_data, dest_file)
 
     def is_valid(self, model_data: dict):
         """Validate passed model_data against the model schema."""
