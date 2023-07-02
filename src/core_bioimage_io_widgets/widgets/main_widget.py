@@ -51,7 +51,7 @@ class BioImageModelWidget(QWidget):
         tabs.addTab(self.create_other_spec_ui(), "Optional Fields")
         #
         load_button = QPushButton("&Load config")
-        load_button.clicked.connect(self.load_specs)
+        load_button.clicked.connect(self.load_from_file)
         save_button = QPushButton("&Save config")
         save_button.clicked.connect(self.save_specs)
         btn_hbox = QHBoxLayout()
@@ -106,13 +106,7 @@ class BioImageModelWidget(QWidget):
         if len(self.tags_widget.tags) > 0:
             model_data["tags"] = self.tags_widget.tags
         # validate the model data
-        model_schema = schemas.model.Model()
-        errors = model_schema.validate(model_data)
-        if errors:
-            validation_win = ValidationWidget()
-            validation_win.update_content(create_validation_ui(errors))
-            validation_win.setMinimumHeight(300)
-            validation_win.show()
+        if not self.is_valid(model_data):
             return
 
         dest_file = save_file_as("Yaml file (*.yaml)", f"./{model_data['name'].replace(' ', '_')}.yaml", self)
@@ -120,13 +114,19 @@ class BioImageModelWidget(QWidget):
             with open(dest_file, mode="w") as f:
                 yaml.safe_dump(model_data, f, default_flow_style=False)
 
-    def load_specs(self):
-        """Load the model's specifications from a yaml file."""
+    def load_from_file(self):
+        """Open a file dialog to select model yaml file."""
         selected_yml = select_file("Yaml file (*.yaml)", self)
-        with open(selected_yml) as f:
-            model_data = yaml.safe_load(f)
-        print(model_data)
-        # TODO: model_data should be valid specs
+        if selected_yml is not None:
+            with open(selected_yml) as f:
+                model_data = yaml.safe_load(f)
+                self.load_specs(model_data)
+
+    def load_specs(self, model_data: dict):
+        """Load the model's specifications from a yaml file."""
+        # model_data should be a valid specs
+        if not self.is_valid(model_data):
+            return
         # set ui data
         set_ui_data_from_dict(self, model_data)  # handles basic direct inputs
         # weights
@@ -155,17 +155,32 @@ class BioImageModelWidget(QWidget):
         self.tags_widget.tags = model_data["tags"]
         self.tags_widget.refresh_tags()
 
+    def is_valid(self, model_data: dict):
+        """Validate passed model_data against the model schema."""
+        model_schema = schemas.model.Model()
+        errors = model_schema.validate(model_data)
+        if errors:
+            validation_win = ValidationWidget()
+            validation_win.update_content(create_validation_ui(errors))
+            validation_win.setMinimumHeight(300)
+            validation_win.show()
+            return False
+
+        return True
+
     def create_required_specs_ui(self):
         """Create ui for the required specs."""
         # model name
         name_textbox = QLineEdit()
         name_label, _ = enhance_widget(name_textbox, "Model Name", self.model_schema.fields["name"])
+
         # model's description
         description_textbox = QPlainTextEdit()
         description_textbox.setFixedHeight(65)
         description_label, _ = enhance_widget(
             description_textbox, "Description", self.model_schema.fields["description"]
         )
+
         # license
         license_combo = QComboBox()
         license_combo.addItems(get_spdx_licenses())
@@ -176,6 +191,7 @@ class BioImageModelWidget(QWidget):
         license_completer.setCaseSensitivity(Qt.CaseInsensitive)
         license_combo.setCompleter(license_completer)
         license_label, _ = enhance_widget(license_combo, "License", self.model_schema.fields["license"])
+
         # documentation
         doc_textbox = QLineEdit()
         doc_textbox.setPlaceholderText("Select Documentation file (*.md)")
@@ -183,6 +199,7 @@ class BioImageModelWidget(QWidget):
         doc_label, _ = enhance_widget(doc_textbox, "Documentation", self.model_schema.fields["documentation"])
         doc_button = QPushButton("Browse...")
         doc_button.clicked.connect(lambda: select_file("Mark Down files (*.md)", self, doc_textbox))
+
         # model's weights
         weights_type_label = QLabel("Weights Format<sup>*</sup>:")
         self.weights_combo = QComboBox()
@@ -206,43 +223,53 @@ class BioImageModelWidget(QWidget):
             self.model_source_sha256_textbox, "Model Source Code SHA256",
             pytorch_state_dict_schema.fields["architecture_sha256"]
         )
+
         # authors
         authors_label = QLabel("Authors<sup>*</sup>:")
         self.authors_listview = QListWidget()
         self.authors_listview.setFixedHeight(70)
         authors_button_add = QPushButton("Add")
-        authors_button_add.clicked.connect(lambda: self.show_author_form(edit=False))
+        authors_button_add.clicked.connect(self.new_author)
         authors_button_edit = QPushButton("Edit")
-        authors_button_edit.clicked.connect(lambda: self.show_author_form(edit=True))
+        authors_button_edit.clicked.connect(self.edit_author)
         authors_button_del = QPushButton("Remove")
         authors_button_del.clicked.connect(self.del_author)
         authors_btn_vbox = QVBoxLayout()
         authors_btn_vbox.addWidget(authors_button_add)
         authors_btn_vbox.addWidget(authors_button_edit)
         authors_btn_vbox.addWidget(authors_button_del)
+
         # inputs
         inputs_label = QLabel("Inputs<sup>*</sup>:")
         self.inputs_listview = QListWidget()
         self.inputs_listview.setFixedHeight(70)
         inputs_button_add = QPushButton("Add")
-        inputs_button_add.clicked.connect(lambda: self.show_input_form())
+        inputs_button_add.clicked.connect(self.new_model_input)
+        inputs_button_edit = QPushButton("Edit")
+        inputs_button_edit.clicked.connect(self.edit_model_input)
         inputs_button_del = QPushButton("Remove")
         inputs_button_del.clicked.connect(self.del_input)
         self.inputs_btn_vbox = QVBoxLayout()
         self.inputs_btn_vbox.addWidget(inputs_button_add)
+        self.inputs_btn_vbox.addWidget(inputs_button_edit)
         self.inputs_btn_vbox.addWidget(inputs_button_del)
+
         # outputs
         outputs_label = QLabel("Outputs<sup>*</sup>:")
         self.outputs_listview = QListWidget()
         self.outputs_listview.setFixedHeight(70)
         outputs_button_add = QPushButton("Add")
-        outputs_button_add.clicked.connect(lambda: self.show_output_form())
+        outputs_button_add.clicked.connect(self.new_model_output)
+        outputs_button_edit = QPushButton("Edit")
+        outputs_button_edit.clicked.connect(self.edit_model_output)
         outputs_button_del = QPushButton("Remove")
         outputs_button_del.clicked.connect(self.del_output)
         self.outputs_btn_vbox = QVBoxLayout()
         self.outputs_btn_vbox.addWidget(outputs_button_add)
+        self.outputs_btn_vbox.addWidget(outputs_button_edit)
         self.outputs_btn_vbox.addWidget(outputs_button_del)
-        #
+
+        # add widgets to the layout
         required_layout = QGridLayout()
         required_layout.addWidget(name_label, 0, 0)
         required_layout.addWidget(name_textbox, 0, 1)
@@ -326,36 +353,36 @@ class BioImageModelWidget(QWidget):
             self.model_src_label.setEnabled(False)
             self.model_src_sha256_label.setEnabled(False)
 
-    def show_author_form(self, edit=False):
-        """Shows the author form to add a new or modify selected author."""
-        author_data: dict = None
-        if edit:
-            curr_row = self.authors_listview.currentRow()
-            if curr_row > -1:
-                author_data = self.authors[curr_row]
-            else:
-                return
-        else:
-            # new entry: unselect current row
-            self.authors_listview.setCurrentRow(-1)
-        # show the author's form
-        author_win = AuthorWidget(author_data=author_data)
+    def new_author(self):
+        """Show author's form to add a new author."""
+        author_win = AuthorWidget()
         author_win.setWindowModality(Qt.ApplicationModal)
-        author_win.submit.connect(self.update_author)
+        author_win.submit.connect(self.add_author)
         author_win.show()
+
+    def edit_author(self):
+        """Show author's form to modify an existing author."""
+        selected_index = self.authors_listview.currentRow()
+        if selected_index > -1:
+            author_data = self.authors[selected_index]
+            author_win = AuthorWidget(author_data=author_data)
+            author_win.setWindowModality(Qt.ApplicationModal)
+            author_win.submit.connect(lambda author_data: self.update_author(selected_index, author_data))
+            author_win.show()
 
     def populate_authors_list(self):
         """Populates the authors' listview widget with the list of authors."""
         self.authors_listview.clear()
         self.authors_listview.addItems(author["name"] for author in self.authors)
 
-    def update_author(self, author_data: dict):
-        """Modify or add new author to the list."""
-        curr_row = self.authors_listview.currentRow()
-        if curr_row > -1:
-            self.authors[curr_row] = author_data
-        else:
-            self.authors.append(author_data)
+    def add_author(self, author_data: dict):
+        """Add a new author to the list."""
+        self.authors.append(author_data)
+        self.populate_authors_list()
+
+    def update_author(self, index: int, author_data):
+        """Update the author at the given index with the given data."""
+        self.authors[index] = author_data
         self.populate_authors_list()
 
     def del_author(self):
@@ -391,14 +418,35 @@ class BioImageModelWidget(QWidget):
         selected_file = select_file("Numpy File (*.npy)", parent=self)
         list_widget.addItem(selected_file)
 
-    def show_input_form(self):
+    def new_model_input(self):
         """Shows the input form to add a new model's input."""
         input_win = InputTensorWidget(
             input_names=[item["name"] for item in self.input_tensors]
         )
         input_win.setWindowModality(Qt.ApplicationModal)
-        input_win.submit.connect(self.update_input)
+        input_win.submit.connect(self.add_model_input)
         input_win.show()
+
+    def edit_model_input(self):
+        """Shows the input's form to modify selected model's input."""
+        selected_index = self.inputs_listview.currentRow()
+        if selected_index > -1:
+            input_data = {
+                "test_input": self.test_inputs[selected_index],
+                "input_tensor": self.input_tensors[selected_index]
+            }
+            input_win = InputTensorWidget(
+                input_names=[  # pass all other names except selected one
+                    item["name"] for item in self.input_tensors
+                    if item["name"] != self.input_tensors[selected_index]["name"]
+                ],
+                input_data=input_data
+            )
+            input_win.setWindowModality(Qt.ApplicationModal)
+            input_win.submit.connect(
+                lambda input_data: self.update_model_input(selected_index, input_data)
+            )
+            input_win.show()
 
     def populate_inputs_list(self):
         """Populates the inputs' listview widget with the list of model's inputs."""
@@ -408,11 +456,17 @@ class BioImageModelWidget(QWidget):
             for in_tensor, in_test in zip(self.input_tensors, self.test_inputs)
         )
 
-    def update_input(self, model_input: dict):
-        """Add a new model's input to the list."""
+    def add_model_input(self, model_input: dict):
+        """Add model's input to the list."""
         # model_input keys: 'test_input', 'input_tensor'
         self.input_tensors.append(model_input['input_tensor'])
         self.test_inputs.append(model_input['test_input'])
+        self.populate_inputs_list()
+
+    def update_model_input(self, index: int, input_data: dict):
+        """Update model's input at given index with given data."""
+        self.test_inputs[index] = input_data["test_input"]
+        self.input_tensors[index] = input_data["input_tensor"]
         self.populate_inputs_list()
 
     def del_input(self):
@@ -425,14 +479,35 @@ class BioImageModelWidget(QWidget):
             del self.test_inputs[del_row]
             self.populate_inputs_list()
 
-    def show_output_form(self):
+    def new_model_output(self):
         """Shows the output form to add a new model's output."""
         output_win = OutputTensorWidget(
             output_names=[item["name"] for item in self.output_tensors]
         )
         output_win.setWindowModality(Qt.ApplicationModal)
-        output_win.submit.connect(self.update_output)
+        output_win.submit.connect(self.add_model_output)
         output_win.show()
+
+    def edit_model_output(self):
+        """Shows the output's form to modify selected model's output."""
+        selected_index = self.outputs_listview.currentRow()
+        if selected_index > -1:
+            output_data = {
+                "test_output": self.test_outputs[selected_index],
+                "output_tensor": self.output_tensors[selected_index]
+            }
+            output_win = OutputTensorWidget(
+                output_names=[  # pass all other names except selected one
+                    item["name"] for item in self.output_tensors
+                    if item["name"] != self.output_tensors[selected_index]["name"]
+                ],
+                output_data=output_data
+            )
+            output_win.setWindowModality(Qt.ApplicationModal)
+            output_win.submit.connect(
+                lambda output_data: self.update_model_output(selected_index, output_data)
+            )
+            output_win.show()
 
     def populate_outputs_list(self):
         """Populates the outputs' listview widget with the list of model's outputs."""
@@ -442,11 +517,17 @@ class BioImageModelWidget(QWidget):
             for out_tensor, out_test in zip(self.output_tensors, self.test_outputs)
         )
 
-    def update_output(self, model_output: dict):
+    def add_model_output(self, model_output: dict):
         """Add a new model's output to the list."""
         # model_output keys: 'test_output', 'output_tensor'
         self.output_tensors.append(model_output['output_tensor'])
         self.test_outputs.append(model_output['test_output'])
+        self.populate_outputs_list()
+
+    def update_model_output(self, index: int, output_data: dict):
+        """Update model's output at given index with given data."""
+        self.test_outputs[index] = output_data["test_output"]
+        self.output_tensors[index] = output_data["output_tensor"]
         self.populate_outputs_list()
 
     def del_output(self):

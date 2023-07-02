@@ -111,10 +111,10 @@ class PostprocessingWidget(QWidget):
             self.validation_widget.update_content(create_validation_ui(errors))
         else:
             # submit preprocess data
-            postprocess = schemas.model.Postprocessing().load({
+            postprocess = {
                 'name': self.process_combo.currentText(),
                 'kwargs': process_data
-            })
+            }
             self.submit.emit(postprocess)
             self.close()
 

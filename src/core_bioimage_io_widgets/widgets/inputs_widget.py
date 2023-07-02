@@ -26,7 +26,7 @@ class InputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, input_names: list = [], parent=None):
+    def __init__(self, input_names: list = [], input_data: dict = None, parent=None):
         super().__init__(parent)
 
         self.input_tensor_schema = schemas.model.InputTensor()
@@ -35,6 +35,9 @@ class InputTensorWidget(QWidget):
         self.preprocessings = []
 
         self.create_ui()
+        # check edit mode
+        if input_data is not None:
+            self.set_ui_data(input_data)
 
     def create_ui(self):
         """Creates ui for model's input tensor."""
@@ -67,7 +70,7 @@ class InputTensorWidget(QWidget):
         self.preprocessing_listview = QListWidget()
         self.preprocessing_listview.setMaximumHeight(120)
         preprocessing_button_add = QPushButton("Add")
-        preprocessing_button_add.clicked.connect(self.show_preprocessing)
+        preprocessing_button_add.clicked.connect(self.show_preprocessing_form)
         preprocessing_button_del = QPushButton("Remove")
         preprocessing_button_del.clicked.connect(self.remove_preprocessing)
         preprocessing_btn_vbox = QVBoxLayout()
@@ -113,6 +116,15 @@ class InputTensorWidget(QWidget):
         self.setMaximumWidth(700)
         self.setWindowTitle("Input Tensor")
 
+    def set_ui_data(self, input_data: dict):
+        """Fill ui fields with given data."""
+        self.test_input_selected(input_data["test_input"])
+        input_tensor_data: dict = input_data["input_tensor"]
+        self.name_textbox.setText(input_tensor_data["name"])
+        self.axes_textbox.setText(input_tensor_data["axes"])
+        for process in input_tensor_data["preprocessing"]:
+            self.add_preprocessing(process)
+
     def submit_input_tensor(self):
         """Validate and submit the input tensor."""
         input_data = {
@@ -144,6 +156,11 @@ class InputTensorWidget(QWidget):
     def select_test_input(self):
         """Opens a file dialog to select a npy file as a test input and read the input shape."""
         selected_file, _ = QFileDialog.getOpenFileName(self, "Browse", ".", "Numpy file (*.npy)")
+        if selected_file:
+            self.test_input_selected(selected_file)
+
+    def test_input_selected(self, selected_file: str):
+        """Read selected numpy file and update corresponding ui."""
         self.test_input_textbox.setText(selected_file)
         self.input_groupbox.setEnabled(True)
         self.test_input = selected_file
@@ -163,17 +180,17 @@ class InputTensorWidget(QWidget):
         # set input name
         self.name_textbox.setText(self.get_input_name())
 
-    def show_preprocessing(self):
+    def show_preprocessing_form(self):
         """Show Preprocessing form."""
         preprocess_form = PreprocessingWidget()
         preprocess_form.setWindowModality(Qt.ApplicationModal)
         preprocess_form.submit.connect(self.add_preprocessing)
         preprocess_form.show()
 
-    def add_preprocessing(self, preprocess: nodes.model.Preprocessing):
+    def add_preprocessing(self, preprocess: dict):
         """Add created preprocessing to the listview."""
-        self.preprocessings.append({'name': preprocess.name, 'kwargs': preprocess.kwargs})
-        text = f"{preprocess.name} {preprocess.kwargs}"
+        self.preprocessings.append({'name': preprocess["name"], 'kwargs': preprocess["kwargs"]})
+        text = f"{preprocess['name']} 'kwargs': preprocess['kwargs']"
         self.preprocessing_listview.addItem(text)
 
     def remove_preprocessing(self):

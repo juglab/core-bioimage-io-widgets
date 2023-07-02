@@ -26,7 +26,7 @@ class OutputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, output_names: list = [], parent=None):
+    def __init__(self, output_names: list = [], output_data: dict = None, parent=None):
         super().__init__(parent)
 
         self.output_tensor_schema = schemas.model.OutputTensor()
@@ -35,6 +35,9 @@ class OutputTensorWidget(QWidget):
         self.postprocessings = []
 
         self.create_ui()
+        # check edit mode
+        if output_data is not None:
+            self.set_ui_data(output_data)
 
     def create_ui(self):
         """Creates ui for model's output tensor."""
@@ -122,6 +125,16 @@ class OutputTensorWidget(QWidget):
         self.setMaximumWidth(700)
         self.setWindowTitle("Output Tensor")
 
+    def set_ui_data(self, output_data: dict):
+        """Fill ui fields with given data."""
+        self.test_output_selected(output_data["test_output"])
+        output_tensor_data: dict = output_data["output_tensor"]
+        self.name_textbox.setText(output_tensor_data["name"])
+        self.axes_textbox.setText(output_tensor_data["axes"])
+        self.halo_textbox.setText(",".join(str(h) for h in output_tensor_data["halo"]))
+        for process in output_tensor_data["postprocessing"]:
+            self.add_postprocessing(process)
+
     def submit_output_tensor(self):
         """Validate and submit the output tensor."""
         output_data = {
@@ -155,6 +168,11 @@ class OutputTensorWidget(QWidget):
     def select_test_output(self):
         """Opens a file dialog to select a npy file as a test output and read the output shape."""
         selected_file, _ = QFileDialog.getOpenFileName(self, "Browse", ".", "Numpy file (*.npy)")
+        if selected_file is not None:
+            self.test_output_selected(selected_file)
+
+    def test_output_selected(self, selected_file: str):
+        """Read selected numpy file and update corresponding ui."""
         self.test_output_textbox.setText(selected_file)
         self.output_groupbox.setEnabled(True)
         self.test_output = selected_file
@@ -186,8 +204,8 @@ class OutputTensorWidget(QWidget):
 
     def add_postprocessing(self, postprocess: nodes.model.Postprocessing):
         """Add created postprocessing to the listview."""
-        self.postprocessings.append({'name': postprocess.name, 'kwargs': postprocess.kwargs})
-        text = f"{postprocess.name} {postprocess.kwargs}"
+        self.postprocessings.append({'name': postprocess["name"], 'kwargs': postprocess["kwargs"]})
+        text = f"{postprocess['name']} {postprocess['kwargs']}"
         self.postprocessing_listview.addItem(text)
 
     def remove_postprocessing(self):
