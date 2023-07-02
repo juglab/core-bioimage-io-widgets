@@ -317,7 +317,7 @@ class BioImageModelWidget(QWidget):
         covers_button_add_uri.clicked.connect(self.add_cover_from_uri)
         covers_button_del = QPushButton("Remove")
         covers_button_del.clicked.connect(lambda: remove_from_listview(
-                self.covers_listview, "Are you sure you want to remove the selected cover?"
+                self, self.covers_listview, "Are you sure you want to remove the selected cover?"
         ))
         covers_btn_vbox = QVBoxLayout()
         covers_btn_vbox.addWidget(covers_button_add)
