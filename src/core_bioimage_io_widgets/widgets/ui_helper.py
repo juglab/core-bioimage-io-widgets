@@ -126,26 +126,15 @@ def get_ui_input_data(parent: QWidget) -> dict:
     return entities
 
 
-def create_validation_ui0(errors: Dict):
-    """Creates ui for validation errors."""
+def create_validation_ui(issues: Dict, warning: bool = False):
+    """Creates ui for validation errors / warnings."""
     widgets = []
-    for field_name, msg_list in errors.items():
-        msg_list = flatten(msg_list)
-        msg = " | ".join(msg_list)
-        label = QLabel(f"{field_name.title()}: {msg}")
-        label.setStyleSheet("color: rgb(240, 40, 90)")
-        label.setAlignment(Qt.AlignCenter)
-        widgets.append(label)
-
-    return widgets
-
-
-def create_validation_ui(errors: Dict):
-    """Creates ui for validation errors."""
-    widgets = []
-    errors = json.dumps(errors, indent=2)
-    label = QLabel(errors)
-    label.setStyleSheet("color: rgb(240, 40, 90)")
+    issues = json.dumps(issues, indent=2)
+    color = "rgb(240, 40, 90)"  # redish for errors
+    if warning:
+        color = "rgb(230, 170, 35)"
+    label = QLabel(issues)
+    label.setStyleSheet(f"color: {color}")
     label.setAlignment(Qt.AlignJustify)
     widgets.append(label)
 

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import List, Dict
 
 from bioimageio.core import load_raw_resource_description
@@ -65,6 +66,7 @@ def build_model_zip(model_data: dict, zip_file_path: str):
         license=model_data["license"],
         covers=model_data["covers"],
         tags=model_data["tags"],
+        root=Path(zip_file_path).parent
     )
 
     return raw_model

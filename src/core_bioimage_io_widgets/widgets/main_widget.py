@@ -186,6 +186,7 @@ class BioImageModelWidget(QWidget):
         if dest_file:
             # buil model zip file
             build_model_zip(model_data, dest_file)
+            QMessageBox.information(self, "BioImage.io", "Model zip file created successfully.")
 
     def is_valid(self, model_data: dict):
         """Validate passed model_data against the model schema."""
