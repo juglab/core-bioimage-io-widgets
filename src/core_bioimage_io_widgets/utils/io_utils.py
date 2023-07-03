@@ -59,6 +59,7 @@ def build_model_zip(model_data: dict, zip_file_path: str):
         halo=[output.get("halo") for output in model_data["outputs"]],
         postprocessing=[output.get("postprocessing") for output in model_data["outputs"]],
         authors=model_data["authors"],
+        cite=model_data["cite"],
         documentation=model_data["documentation"],
         description=model_data["description"],
         license=model_data["license"],

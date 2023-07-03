@@ -70,7 +70,7 @@ def enhance_widget(
         field: Union[schemas.SharedBioImageIOSchema, Field] = None
         ):
     """Adds a label, and set some properties on the input widget."""
-    label_text = label_text.replace("_", " ").title()
+    label_text = label_text.replace("_", " ")
     label = QLabel(label_text + ":")
     if field is not None:
         input_widget.setProperty("field", field)

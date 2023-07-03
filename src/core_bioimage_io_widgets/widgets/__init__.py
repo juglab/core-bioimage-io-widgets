@@ -7,4 +7,4 @@ from .inputs_widget import InputTensorWidget
 from .preprocessing_widget import PreprocessingWidget
 from .outputs_widget import OutputTensorWidget
 from .postprocessing_widget import PostprocessingWidget
-
+from .cite_widget import CiteWidget

@@ -34,7 +34,7 @@ class ValidationWidget(QtWidgets.QWidget):
         self.setLayout(vbox2)
 
     def update_content(self, widget_list):
-        """Clears the content area, and then adds new widgets to it."""
+        """Clears the content area, and then adds given widgets to it."""
         self.clear_content_area()
         # add widgets
         for widget in widget_list:

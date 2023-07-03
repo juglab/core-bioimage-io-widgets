@@ -30,6 +30,7 @@ from core_bioimage_io_widgets.widgets.single_input_widget import SingleInputWidg
 from core_bioimage_io_widgets.widgets.tags_input_widget import TagsInputWidget
 from core_bioimage_io_widgets.widgets.inputs_widget import InputTensorWidget
 from core_bioimage_io_widgets.widgets.outputs_widget import OutputTensorWidget
+from core_bioimage_io_widgets.widgets.cite_widget import CiteWidget
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
@@ -46,6 +47,7 @@ class BioImageModelWidget(QWidget):
         self.test_inputs: List[str] = []
         self.output_tensors: List[dict] = []
         self.test_outputs: List[str] = []
+        self.cites: List[dict] = []
 
         tabs = QTabWidget()
         tabs.addTab(self.create_required_specs_ui(), "Required Fields")
@@ -115,6 +117,7 @@ class BioImageModelWidget(QWidget):
             "format_version": FORMAT_VERSION,
             "timestamp": dt.datetime.now().isoformat(),
             "authors": self.authors,
+            "cite": self.cites,
             "weights": weights,
             "test_inputs": self.test_inputs,
             "inputs": self.input_tensors,
@@ -153,6 +156,9 @@ class BioImageModelWidget(QWidget):
         # authors
         self.authors = model_data["authors"]
         self.populate_authors_list()
+        # cites
+        self.cites = model_data["cite"]
+        self.populate_cites_list()
         # inputs
         self.input_tensors = model_data["inputs"]
         self.test_inputs = model_data["test_inputs"]
@@ -194,7 +200,7 @@ class BioImageModelWidget(QWidget):
 
         return True
 
-    def create_required_specs_ui(self):
+    def create_required_specs_ui(self) -> QWidget:
         """Create ui for the required specs."""
         # model name
         name_textbox = QLineEdit()
@@ -265,6 +271,21 @@ class BioImageModelWidget(QWidget):
         authors_btn_vbox.addWidget(authors_button_edit)
         authors_btn_vbox.addWidget(authors_button_del)
 
+        # citations
+        cites_label = QLabel("Citations<sup>*</sup>:")
+        self.cites_listview = QListWidget()
+        self.cites_listview.setFixedHeight(70)
+        cites_button_add = QPushButton("Add")
+        cites_button_add.clicked.connect(self.new_cite)
+        cites_button_edit = QPushButton("Edit")
+        cites_button_edit.clicked.connect(self.edit_cite)
+        cites_button_del = QPushButton("Remove")
+        cites_button_del.clicked.connect(self.del_cite)
+        cites_btn_vbox = QVBoxLayout()
+        cites_btn_vbox.addWidget(cites_button_add)
+        cites_btn_vbox.addWidget(cites_button_edit)
+        cites_btn_vbox.addWidget(cites_button_del)
+
         # inputs
         inputs_label = QLabel("Inputs<sup>*</sup>:")
         self.inputs_listview = QListWidget()
@@ -275,10 +296,10 @@ class BioImageModelWidget(QWidget):
         inputs_button_edit.clicked.connect(self.edit_model_input)
         inputs_button_del = QPushButton("Remove")
         inputs_button_del.clicked.connect(self.del_input)
-        self.inputs_btn_vbox = QVBoxLayout()
-        self.inputs_btn_vbox.addWidget(inputs_button_add)
-        self.inputs_btn_vbox.addWidget(inputs_button_edit)
-        self.inputs_btn_vbox.addWidget(inputs_button_del)
+        inputs_btn_vbox = QVBoxLayout()
+        inputs_btn_vbox.addWidget(inputs_button_add)
+        inputs_btn_vbox.addWidget(inputs_button_edit)
+        inputs_btn_vbox.addWidget(inputs_button_del)
 
         # outputs
         outputs_label = QLabel("Outputs<sup>*</sup>:")
@@ -290,10 +311,10 @@ class BioImageModelWidget(QWidget):
         outputs_button_edit.clicked.connect(self.edit_model_output)
         outputs_button_del = QPushButton("Remove")
         outputs_button_del.clicked.connect(self.del_output)
-        self.outputs_btn_vbox = QVBoxLayout()
-        self.outputs_btn_vbox.addWidget(outputs_button_add)
-        self.outputs_btn_vbox.addWidget(outputs_button_edit)
-        self.outputs_btn_vbox.addWidget(outputs_button_del)
+        outputs_btn_vbox = QVBoxLayout()
+        outputs_btn_vbox.addWidget(outputs_button_add)
+        outputs_btn_vbox.addWidget(outputs_button_edit)
+        outputs_btn_vbox.addWidget(outputs_button_del)
 
         # add widgets to the layout
         required_layout = QGridLayout()
@@ -306,24 +327,56 @@ class BioImageModelWidget(QWidget):
         required_layout.addWidget(doc_label, 3, 0)
         required_layout.addWidget(doc_textbox, 3, 1)
         required_layout.addWidget(doc_button, 3, 2)
-        required_layout.addWidget(weights_type_label, 4, 0)
-        required_layout.addWidget(self.weights_combo, 4, 1)
-        required_layout.addWidget(weights_label, 5, 0)
-        required_layout.addWidget(self.weights_textbox, 5, 1)
-        required_layout.addWidget(weights_button, 5, 2)
-        required_layout.addWidget(self.model_src_label, 6, 0)
-        required_layout.addWidget(self.model_source_textbox, 6, 1)
-        required_layout.addWidget(self.model_src_sha256_label, 7, 0)
-        required_layout.addWidget(self.model_source_sha256_textbox, 7, 1)
-        required_layout.addWidget(authors_label, 8, 0)
-        required_layout.addWidget(self.authors_listview, 8, 1)
-        required_layout.addLayout(authors_btn_vbox, 8, 2)
-        required_layout.addWidget(inputs_label, 9, 0)
-        required_layout.addWidget(self.inputs_listview, 9, 1)
-        required_layout.addLayout(self.inputs_btn_vbox, 9, 2)
-        required_layout.addWidget(outputs_label, 10, 0)
-        required_layout.addWidget(self.outputs_listview, 10, 1)
-        required_layout.addLayout(self.outputs_btn_vbox, 10, 2)
+        # put the rest into tabs
+        tabs = QTabWidget()
+        # authors
+        page = QWidget()
+        page_grid = QGridLayout()
+        page.setLayout(page_grid)
+        page_grid.addWidget(authors_label, 0, 0)
+        page_grid.addWidget(self.authors_listview, 0, 1)
+        page_grid.addLayout(authors_btn_vbox, 0, 2)
+        tabs.addTab(page, "Authors")
+        # cites
+        page = QWidget()
+        page_grid = QGridLayout()
+        page.setLayout(page_grid)
+        page_grid.addWidget(cites_label, 0, 0)
+        page_grid.addWidget(self.cites_listview, 0, 1)
+        page_grid.addLayout(cites_btn_vbox, 0, 2)
+        tabs.addTab(page, "Citations")
+        # weights
+        page = QWidget()
+        page_grid = QGridLayout()
+        page.setLayout(page_grid)
+        page_grid.addWidget(weights_type_label, 0, 0)
+        page_grid.addWidget(self.weights_combo, 0, 1)
+        page_grid.addWidget(weights_label, 1, 0)
+        page_grid.addWidget(self.weights_textbox, 1, 1)
+        page_grid.addWidget(weights_button, 1, 2)
+        page_grid.addWidget(self.model_src_label, 2, 0)
+        page_grid.addWidget(self.model_source_textbox, 2, 1)
+        page_grid.addWidget(self.model_src_sha256_label, 3, 0)
+        page_grid.addWidget(self.model_source_sha256_textbox, 3, 1)
+        tabs.addTab(page, "Weights")
+        # inputs
+        page = QWidget()
+        page_grid = QGridLayout()
+        page.setLayout(page_grid)
+        page_grid.addWidget(inputs_label, 0, 0)
+        page_grid.addWidget(self.inputs_listview, 0, 1)
+        page_grid.addLayout(inputs_btn_vbox, 0, 2)
+        tabs.addTab(page, "Inputs")
+        # outputs
+        page = QWidget()
+        page_grid = QGridLayout()
+        page.setLayout(page_grid)
+        page_grid.addWidget(outputs_label, 0, 0)
+        page_grid.addWidget(self.outputs_listview, 0, 1)
+        page_grid.addLayout(outputs_btn_vbox, 0, 2)
+        tabs.addTab(page, "Outputs")
+
+        required_layout.addWidget(tabs, 4, 0, 1, 3)
         required_layout.setRowStretch(-1, 1)
         #
         frame = QFrame()
@@ -332,7 +385,7 @@ class BioImageModelWidget(QWidget):
 
         return frame
 
-    def create_other_spec_ui(self):
+    def create_other_spec_ui(self) -> QWidget:
         """Create ui for optional specs."""
         covers_label = QLabel("Covers:")
         self.covers_listview = QListWidget()
@@ -396,6 +449,17 @@ class BioImageModelWidget(QWidget):
             author_win.submit.connect(lambda author_data: self.update_author(selected_index, author_data))
             author_win.show()
 
+    def del_author(self):
+        """Remove the selected author."""
+        selected_index = self.authors_listview.currentRow()
+        if selected_index > -1:
+            reply, del_row = remove_from_listview(
+                self, self.authors_listview, "Are you sure you want to remove the selected author?"
+            )
+            if reply:
+                del self.authors[del_row]
+                self.populate_authors_list()
+
     def populate_authors_list(self):
         """Populates the authors' listview widget with the list of authors."""
         self.authors_listview.clear()
@@ -410,15 +474,6 @@ class BioImageModelWidget(QWidget):
         """Update the author at the given index with the given data."""
         self.authors[index] = author_data
         self.populate_authors_list()
-
-    def del_author(self):
-        """Remove the selected author."""
-        reply, del_row = remove_from_listview(
-            self, self.authors_listview, "Are you sure you want to remove the selected author?"
-        )
-        if reply:
-            del self.authors[del_row]
-            self.populate_authors_list()
 
     def add_cover_images(self):
         """Select cover images by a file dialog, and add them to the Cover's listview."""
@@ -497,13 +552,15 @@ class BioImageModelWidget(QWidget):
 
     def del_input(self):
         """Remove the selected input."""
-        reply, del_row = remove_from_listview(
-            self, self.inputs_listview, "Are you sure you want to remove the selected input?"
-        )
-        if reply:
-            del self.input_tensors[del_row]
-            del self.test_inputs[del_row]
-            self.populate_inputs_list()
+        selected_index = self.inputs_listview.currentRow()
+        if selected_index > -1:
+            reply, del_row = remove_from_listview(
+                self, self.inputs_listview, "Are you sure you want to remove the selected input?"
+            )
+            if reply:
+                del self.input_tensors[del_row]
+                del self.test_inputs[del_row]
+                self.populate_inputs_list()
 
     def new_model_output(self):
         """Shows the output form to add a new model's output."""
@@ -558,13 +615,58 @@ class BioImageModelWidget(QWidget):
 
     def del_output(self):
         """Remove the selected output."""
-        reply, del_row = remove_from_listview(
-            self, self.outputs_listview, "Are you sure you want to remove the selected output?"
-        )
-        if reply:
-            del self.output_tensors[del_row]
-            del self.test_outputs[del_row]
-            self.populate_outputs_list()
+        selected_index = self.outputs_listview.currentRow()
+        if selected_index > -1:
+            reply, del_row = remove_from_listview(
+                self, self.outputs_listview, "Are you sure you want to remove the selected output?"
+            )
+            if reply:
+                del self.output_tensors[del_row]
+                del self.test_outputs[del_row]
+                self.populate_outputs_list()
+
+    def new_cite(self):
+        """Show cite form to add a new citation."""
+        win = CiteWidget()
+        win.setWindowModality(Qt.ApplicationModal)
+        win.submit.connect(self.add_cite)
+        win.show()
+
+    def edit_cite(self):
+        """Show citations' form to modify an existing citation."""
+        selected_index = self.cites_listview.currentRow()
+        if selected_index > -1:
+            cite_data = self.cites[selected_index]
+            win = CiteWidget(cite_data=cite_data)
+            win.setWindowModality(Qt.ApplicationModal)
+            win.submit.connect(lambda cite_data: self.update_cite(selected_index, cite_data))
+            win.show()
+
+    def del_cite(self):
+        """Remove the selected citation."""
+        selected_index = self.cites_listview.currentRow()
+        if selected_index > -1:
+            reply, del_row = remove_from_listview(
+                self, self.cites_listview, "Are you sure you want to remove the selected citation?"
+            )
+            if reply:
+                del self.cites[del_row]
+                self.populate_cites_list()
+
+    def populate_cites_list(self):
+        """Populates the citations' listview widget with the list of citations."""
+        self.cites_listview.clear()
+        self.cites_listview.addItems(cite["text"] for cite in self.cites)
+
+    def add_cite(self, cite_data: dict):
+        """Add a new citation to the list."""
+        self.cites.append(cite_data)
+        self.populate_cites_list()
+
+    def update_cite(self, index: int, cite_data: dict):
+        """Update the citation at the given index with the given data."""
+        self.cites[index] = cite_data
+        self.populate_cites_list()
 
 
 if __name__ == "__main__":

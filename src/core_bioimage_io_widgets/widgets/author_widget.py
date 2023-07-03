@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
     QWidget, QApplication, QGridLayout,
-    QLineEdit, QPushButton,
+    QLineEdit, QPushButton, QHBoxLayout
 )
 
 from core_bioimage_io_widgets.utils import nodes, schemas
@@ -69,11 +69,14 @@ class AuthorWidget(QWidget):
         grid.addWidget(orcid_label, 4, 0)
         grid.addWidget(self.orcid_textbox, 4, 1)
         grid.addWidget(self.validation_widget, 5, 0, 1, 2)
-        grid.addWidget(cancel_button, 6, 0, Qt.AlignBottom)
-        grid.addWidget(submit_button, 6, 1, Qt.AlignBottom)
+        hbox = QHBoxLayout()
+        hbox.addWidget(cancel_button)
+        hbox.addWidget(submit_button)
+        grid.addLayout(hbox, 6, 1, Qt.AlignBottom | Qt.AlignRight)
 
         self.setLayout(grid)
         self.setWindowTitle("Author Profile")
+        self.setMinimumWidth(340)
 
     def submit_author(self):
         """Validate and submit the entered author's profile."""

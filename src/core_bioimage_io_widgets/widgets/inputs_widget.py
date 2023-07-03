@@ -22,11 +22,11 @@ from core_bioimage_io_widgets.utils import AXES_REGEX
 
 
 class InputTensorWidget(QWidget):
-    """Model's Input form widget."""
+    """Model's Input widget form."""
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, input_names: list = [], input_data: dict = None, parent=None):
+    def __init__(self, input_names: list = [], input_data: dict = None, parent: QWidget = None):
         super().__init__(parent)
 
         self.input_tensor_schema = schemas.model.InputTensor()
