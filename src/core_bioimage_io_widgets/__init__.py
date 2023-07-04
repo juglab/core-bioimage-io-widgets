@@ -7,5 +7,5 @@ try:
 except PackageNotFoundError:
     __version__ = "uninstalled"
 
-__author__ = "Mehdi Seifi"
+__author__ = "Jug Lab"
 __email__ = "mehdiseifi@gmail.com"
