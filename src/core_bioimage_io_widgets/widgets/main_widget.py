@@ -221,6 +221,11 @@ class BioImageModelWidget(QWidget):
         """Validate passed model_data against the model schema."""
         model_schema = schemas.model.Model()
         errors = model_schema.validate(model_data)
+        # NOTE: check for the model's name to be not empty.
+        if len(errors) == 0:
+            if len(model_data["name"]) == 0:
+                errors["name"] = ["Model's name is required."]
+
         if errors:
             validation_win = ValidationWidget()
             validation_win.update_content(create_validation_ui(errors))
