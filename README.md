@@ -16,7 +16,7 @@ Dependecies:
 - PyYaml
 - bioimageio.core
 
-To install project clone the github repository and install it via pip:
+To install the project, clone the github repository and install it via pip:
 ```bash
 git clone https://github.com/juglab/core-bioimage-io-widgets.git
 cd core-bioimage-io-widgets
