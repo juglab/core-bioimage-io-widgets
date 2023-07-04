@@ -1,26 +1,27 @@
-from typing import Dict, List, Tuple
-
-from qtpy.QtCore import Qt, Signal, QRegExp
-from qtpy.QtWidgets import (
-    QWidget, QApplication,
-    QGridLayout, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QPushButton, QListWidget,
-    QFileDialog, QGroupBox, QLabel,
-    QComboBox
-)
-from qtpy.QtGui import QDoubleValidator, QRegExpValidator
+from typing import Optional
 
 from marshmallow import missing
+from qtpy.QtCore import QRegExp, Qt, Signal
+from qtpy.QtGui import QDoubleValidator, QRegExpValidator
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
+)
 
-from core_bioimage_io_widgets.utils import (
-    schemas, nodes,
-    POSTPROCESSING_TYPES
+from core_bioimage_io_widgets.utils import POSTPROCESSING_TYPES, schemas
+from core_bioimage_io_widgets.widgets.ui_helper import (
+    clear_layout,
+    create_validation_ui,
+    enhance_widget,
+    get_ui_input_data,
 )
 from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
-from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, get_ui_input_data,
-    create_validation_ui, clear_layout
-)
 
 
 class PostprocessingWidget(QWidget):
@@ -28,9 +29,9 @@ class PostprocessingWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.process_schema = None
+        self.process_schema: schemas.rdf.SharedBioImageIOSchema = None
 
         process_label = QLabel("Postprocess:")
         self.process_description_label = QLabel()
@@ -54,7 +55,9 @@ class PostprocessingWidget(QWidget):
         grid = QGridLayout()
         grid.addWidget(process_label, 0, 0, alignment=Qt.AlignTop)
         grid.addWidget(self.process_combo, 0, 1, alignment=Qt.AlignTop)
-        grid.addWidget(self.process_description_label, 1, 1, 1, 2, alignment=Qt.AlignTop)
+        grid.addWidget(
+            self.process_description_label, 1, 1, 1, 2, alignment=Qt.AlignTop
+        )
         grid.addLayout(self.fields_grid, 2, 1, alignment=Qt.AlignTop)
         grid.addWidget(self.validation_widget, 3, 0, 1, 3)
         grid.addLayout(form_btn_hbox, 4, 1, 1, 2, alignment=Qt.AlignBottom)
@@ -67,17 +70,21 @@ class PostprocessingWidget(QWidget):
 
         self.select_preprocessing()
 
-    def select_preprocessing(self):
+    def select_preprocessing(self) -> None:
         """Create input fields based on selected postprocessing parameters."""
         class_name = self.process_combo.currentText()
-        process_type_class = getattr(schemas.model.Postprocessing, class_name, None)
+        process_type_class: schemas.rdf.SharedBioImageIOSchema = getattr(
+            schemas.model.Postprocessing, class_name, None
+        )
         assert process_type_class is not None, "process_type_class is None!"
 
         # create ui for the selected preprocessing type's parameters:
         clear_layout(self.fields_grid)
         self.validation_widget.clear_content_area()
         self.process_schema = process_type_class()
-        self.process_description_label.setText(self.process_schema.bioimageio_description)
+        self.process_description_label.setText(
+            self.process_schema.bioimageio_description
+        )
         for i, (_, field) in enumerate(sorted(self.process_schema.fields.items())):
             if isinstance(field, schemas.ProcMode):
                 qinput = QComboBox()
@@ -91,7 +98,9 @@ class PostprocessingWidget(QWidget):
                         qinput.setText(str(field.default))
                 elif field.type_name.startswith("Axes"):
                     regex = QRegExp(
-                        r"^(?!.*(.).*\1)[CHARS]*$".replace("CHARS", field.metadata["valid_axes"])
+                        r"^(?!.*(.).*\1)[CHARS]*$".replace(
+                            "CHARS", field.metadata["valid_axes"]
+                        )
                     )
                     qinput.setValidator(QRegExpValidator(regex))
                 elif field.type_name.startswith("Array"):
@@ -103,7 +112,7 @@ class PostprocessingWidget(QWidget):
             self.fields_grid.addWidget(qinput, i, 1, alignment=Qt.AlignTop)
         self.update()
 
-    def submit_process(self):
+    def submit_process(self) -> None:
         """Validate the process parameters and submit it."""
         process_data = get_ui_input_data(self)
         errors = self.process_schema.validate(process_data)
@@ -112,8 +121,8 @@ class PostprocessingWidget(QWidget):
         else:
             # submit preprocess data
             postprocess = {
-                'name': self.process_combo.currentText(),
-                'kwargs': process_data
+                "name": self.process_combo.currentText(),
+                "kwargs": process_data,
             }
             self.submit.emit(postprocess)
             self.close()

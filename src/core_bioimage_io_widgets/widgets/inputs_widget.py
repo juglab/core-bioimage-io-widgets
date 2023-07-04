@@ -1,24 +1,30 @@
-from typing import Dict, List, Tuple
-
-from qtpy.QtCore import Qt, Signal, QRegExp
-from qtpy.QtWidgets import (
-    QWidget, QApplication,
-    QGridLayout, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QPushButton, QListWidget,
-    QFileDialog, QGroupBox, QLabel
-)
-from qtpy.QtGui import QRegExpValidator
+from typing import List, Optional
 
 import numpy as np
+from qtpy.QtCore import QRegExp, Qt, Signal
+from qtpy.QtGui import QRegExpValidator
+from qtpy.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
-from core_bioimage_io_widgets.utils import nodes, schemas
-from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
+from core_bioimage_io_widgets.utils import AXES_REGEX, schemas
 from core_bioimage_io_widgets.widgets.preprocessing_widget import PreprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_node, get_ui_input_data,
-    create_validation_ui, remove_from_listview
+    create_validation_ui,
+    enhance_widget,
+    remove_from_listview,
 )
-from core_bioimage_io_widgets.utils import AXES_REGEX
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class InputTensorWidget(QWidget):
@@ -26,25 +32,35 @@ class InputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, input_names: list = [], input_data: dict = None, parent: QWidget = None):
+    def __init__(
+        self,
+        input_names: Optional[list] = None,
+        input_data: Optional[dict] = None,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
 
         self.input_tensor_schema = schemas.model.InputTensor()
-        self.input_names = input_names  # to make this input has a unique name
-        self.input_shape = []
-        self.preprocessings = []
+        if input_names is None:
+            self.input_names = []
+        else:
+            self.input_names = input_names
+        self.input_shape: List[int] = []
+        self.preprocessingsl: List[dict] = []
 
         self.create_ui()
         # check edit mode
         if input_data is not None:
             self.set_ui_data(input_data)
 
-    def create_ui(self):
+    def create_ui(self) -> None:
         """Creates ui for model's input tensor."""
         self.test_input_textbox = QLineEdit()
         self.test_input_textbox.setPlaceholderText("select Test Input file (*.npy)")
         self.test_input_textbox.setReadOnly(True)
-        test_input_label, _ = enhance_widget(self.test_input_textbox, "Test Input<sup>*</sup>")
+        test_input_label, _ = enhance_widget(
+            self.test_input_textbox, "Test Input<sup>*</sup>"
+        )
         test_input_button = QPushButton("Browse...")
         test_input_button.clicked.connect(self.select_test_input)
         test_input_hbox = QHBoxLayout()
@@ -59,7 +75,9 @@ class InputTensorWidget(QWidget):
         #
         self.shape_textbox = QLineEdit()
         self.shape_textbox.setReadOnly(True)
-        shape_label, _ = enhance_widget(self.shape_textbox, "Shape", self.input_tensor_schema.fields["shape"])
+        shape_label, _ = enhance_widget(
+            self.shape_textbox, "Shape", self.input_tensor_schema.fields["shape"]
+        )
         #
         self.axes_textbox = QLineEdit()
         axes_label, _ = enhance_widget(
@@ -116,7 +134,7 @@ class InputTensorWidget(QWidget):
         self.setMaximumWidth(700)
         self.setWindowTitle("Input Tensor")
 
-    def set_ui_data(self, input_data: dict):
+    def set_ui_data(self, input_data: dict) -> None:
         """Fill ui fields with given data."""
         self.test_input_selected(input_data["test_input"])
         input_tensor_data: dict = input_data["input_tensor"]
@@ -125,7 +143,7 @@ class InputTensorWidget(QWidget):
         for process in input_tensor_data["preprocessing"]:
             self.add_preprocessing(process)
 
-    def submit_input_tensor(self):
+    def submit_input_tensor(self) -> None:
         """Validate and submit the input tensor."""
         input_data = {
             "name": self.name_textbox.text(),
@@ -147,19 +165,23 @@ class InputTensorWidget(QWidget):
             return
 
         # emit submit signal and send input data
-        self.submit.emit({
-            "test_input": self.test_input_textbox.text(),
-            "input_tensor": input_data
-        })
+        self.submit.emit(
+            {"test_input": self.test_input_textbox.text(), "input_tensor": input_data}
+        )
         self.close()
 
-    def select_test_input(self):
-        """Opens a file dialog to select a npy file as a test input and read the input shape."""
-        selected_file, _ = QFileDialog.getOpenFileName(self, "Browse", ".", "Numpy file (*.npy)")
+    def select_test_input(self) -> None:
+        """Show a file dialog to select a npy file as test input.
+
+        Then read the input shape.
+        """
+        selected_file, _ = QFileDialog.getOpenFileName(
+            self, "Browse", ".", "Numpy file (*.npy)"
+        )
         if selected_file:
             self.test_input_selected(selected_file)
 
-    def test_input_selected(self, selected_file: str):
+    def test_input_selected(self, selected_file: str) -> None:
         """Read selected numpy file and update corresponding ui."""
         self.test_input_textbox.setText(selected_file)
         self.input_groupbox.setEnabled(True)
@@ -173,35 +195,37 @@ class InputTensorWidget(QWidget):
         self.shape_textbox.setText(" x ".join(str(d) for d in arr.shape))
         # set axes textbox validator based on the test input array shape:
         self.axes_textbox.setMaxLength(_max_len)
-        validator = QRegExpValidator(
-            QRegExp(AXES_REGEX.replace("LEN", str(_max_len)))
-        )
+        validator = QRegExpValidator(QRegExp(AXES_REGEX.replace("LEN", str(_max_len))))
         self.axes_textbox.setValidator(validator)
         # set input name
         self.name_textbox.setText(self.get_input_name())
 
-    def show_preprocessing_form(self):
+    def show_preprocessing_form(self) -> None:
         """Show Preprocessing form."""
         preprocess_form = PreprocessingWidget()
         preprocess_form.setWindowModality(Qt.ApplicationModal)
         preprocess_form.submit.connect(self.add_preprocessing)
         preprocess_form.show()
 
-    def add_preprocessing(self, preprocess: dict):
+    def add_preprocessing(self, preprocess: dict) -> None:
         """Add created preprocessing to the listview."""
-        self.preprocessings.append({'name': preprocess["name"], 'kwargs': preprocess["kwargs"]})
+        self.preprocessings.append(
+            {"name": preprocess["name"], "kwargs": preprocess["kwargs"]}
+        )
         text = f"{preprocess['name']} 'kwargs': preprocess['kwargs']"
         self.preprocessing_listview.addItem(text)
 
-    def remove_preprocessing(self):
+    def remove_preprocessing(self) -> None:
         """Remove selected preprocessing."""
         reply, del_row = remove_from_listview(
-            self, self.preprocessing_listview, "Are you sure you want to remove the selected preprocessing?"
+            self,
+            self.preprocessing_listview,
+            "Are you sure you want to remove the selected preprocessing?",
         )
         if reply:
             del self.preprocessings[del_row]
 
-    def get_input_name(self):
+    def get_input_name(self) -> str:
         """Returns a unique name for the input."""
         num = len(self.input_names) + 1
         name = f"input_{num}"

@@ -1,10 +1,12 @@
+from typing import List, Optional
+
 from qtpy import QtCore, QtWidgets
 
 
 class ValidationWidget(QtWidgets.QWidget):
     """A widget to show form validation errors."""
 
-    def __init__(self,  parent=None):
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
         super().__init__(parent)
 
         self.content_layout = QtWidgets.QVBoxLayout()
@@ -33,7 +35,7 @@ class ValidationWidget(QtWidgets.QWidget):
 
         self.setLayout(vbox2)
 
-    def update_content(self, widget_list):
+    def update_content(self, widget_list: List[QtWidgets.QWidget]) -> None:
         """Clears the content area, and then adds given widgets to it."""
         self.clear_content_area()
         # add widgets
@@ -41,7 +43,7 @@ class ValidationWidget(QtWidgets.QWidget):
             self.content_layout.addWidget(widget, alignment=QtCore.Qt.AlignLeft)
         self.update()
 
-    def clear_content_area(self):
+    def clear_content_area(self) -> None:
         """Clears the content area."""
         for i in reversed(range(self.content_layout.count())):
             self.content_layout.itemAt(i).widget().deleteLater()

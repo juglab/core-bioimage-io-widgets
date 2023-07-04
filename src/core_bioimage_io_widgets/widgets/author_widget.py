@@ -1,17 +1,23 @@
-from typing import Dict, List, Tuple
+from typing import Optional
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
-    QWidget, QApplication, QGridLayout,
-    QLineEdit, QPushButton, QHBoxLayout
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QWidget,
 )
 
-from core_bioimage_io_widgets.utils import nodes, schemas
-from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
+from core_bioimage_io_widgets.utils import schemas
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_dict, get_ui_input_data,
-    create_validation_ui
+    create_validation_ui,
+    enhance_widget,
+    get_ui_input_data,
+    set_ui_data_from_dict,
 )
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class AuthorWidget(QWidget):
@@ -19,7 +25,9 @@ class AuthorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, author_data: dict = None, parent=None):
+    def __init__(
+        self, author_data: Optional[dict] = None, parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent)
 
         self.author_schema = schemas.rdf.Author()
@@ -28,7 +36,7 @@ class AuthorWidget(QWidget):
         if author_data is not None:
             set_ui_data_from_dict(self, author_data)
 
-    def create_ui(self):
+    def create_ui(self) -> None:
         """Creates ui for author's profile."""
         self.name_textbox = QLineEdit()
         name_label, _ = enhance_widget(
@@ -40,11 +48,15 @@ class AuthorWidget(QWidget):
         )
         self.affiliation_textbox = QLineEdit()
         affiliation_label, _ = enhance_widget(
-            self.affiliation_textbox, "Affiliation", self.author_schema.fields["affiliation"]
+            self.affiliation_textbox,
+            "Affiliation",
+            self.author_schema.fields["affiliation"],
         )
         self.git_textbox = QLineEdit()
         git_label, _ = enhance_widget(
-            self.git_textbox, "Github User Name", self.author_schema.fields["github_user"]
+            self.git_textbox,
+            "Github User Name",
+            self.author_schema.fields["github_user"],
         )
         self.orcid_textbox = QLineEdit()
         orcid_label, _ = enhance_widget(
@@ -78,7 +90,7 @@ class AuthorWidget(QWidget):
         self.setWindowTitle("Author Profile")
         self.setMinimumWidth(340)
 
-    def submit_author(self):
+    def submit_author(self) -> None:
         """Validate and submit the entered author's profile."""
         author_data = get_ui_input_data(self)
         # validation

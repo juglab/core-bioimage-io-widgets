@@ -1,24 +1,42 @@
-from .io_utils import (
-    get_spdx_licenses, get_predefined_tags,
-    build_model_zip
+"""Utility function."""
+
+from typing import Any
+
+from .constants import (
+    AXES,
+    AXES_REGEX,
+    FORMAT_VERSION,
+    OUTPUT_TYPES,
+    POSTPROCESSING_TYPES,
+    PREPROCESSING_TYPES,
+    PROCESSING_MODES,
+    PYTORCH_STATE_DICT,
+    WEIGHT_FORMATS,
 )
-from.constants import *
+from .io_utils import build_model_zip, get_predefined_tags, get_spdx_licenses
 
 
-def flatten(nested):
-    """Flatten a list of lists recursively."""
-    if len(nested) == 0:
-        return nested
-    if isinstance(nested, dict):
-        nested = list(nested.values())
-    if isinstance(nested[0], list) or isinstance(nested[0], dict):
-        return flatten(nested[0]) + flatten(nested[1:])
-    return nested[:1] + flatten(nested[1:])
-
-
-def safe_cast(value: str, to_type, default=None):
+def safe_cast(value: str, to_type: Any, default: Any = None) -> Any:
     """Casts value to given type safely."""
     try:
         return to_type(value.strip())
     except (ValueError, TypeError):
         return default
+
+
+__all__ = [
+    "FORMAT_VERSION",
+    "AXES",
+    "AXES_REGEX",
+    "PREPROCESSING_TYPES",
+    "POSTPROCESSING_TYPES",
+    "PROCESSING_MODES",
+    "WEIGHT_FORMATS",
+    "PYTORCH_STATE_DICT",
+    "OUTPUT_TYPES",
+    "build_model_zip",
+    "get_predefined_tags",
+    "get_spdx_licenses",
+    "nodes",
+    "schemas",
+]

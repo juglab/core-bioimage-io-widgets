@@ -1,3 +1,11 @@
+"""Providing resources (files, ...) for this project."""
+
 from .resources import (
-    SPDX_LICENSES, SITE_CONFIG,
+    SITE_CONFIG,
+    SPDX_LICENSES,
 )
+
+__all__ = [
+    "SPDX_LICENSES",
+    "SITE_CONFIG",
+]

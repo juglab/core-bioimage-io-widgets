@@ -1,23 +1,22 @@
-from typing import Dict, List, Tuple
+from typing import Optional
 
-from qtpy.QtCore import Qt, Signal, QRegExp
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
-    QWidget, QApplication,
-    QGridLayout, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QPushButton, QListWidget,
-    QFileDialog, QGroupBox, QLabel
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QWidget,
 )
-from qtpy.QtGui import QRegExpValidator
 
-import numpy as np
-
-from core_bioimage_io_widgets.utils import nodes, schemas
-from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
-from core_bioimage_io_widgets.widgets.preprocessing_widget import PreprocessingWidget
+from core_bioimage_io_widgets.utils import schemas
 from core_bioimage_io_widgets.widgets.ui_helper import (
-    enhance_widget, set_ui_data_from_node, get_ui_input_data,
-    create_validation_ui, remove_from_listview
+    create_validation_ui,
+    enhance_widget,
+    get_ui_input_data,
 )
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class CiteWidget(QWidget):
@@ -25,7 +24,9 @@ class CiteWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, cite_data: dict = None, parent: QWidget = None):
+    def __init__(
+        self, cite_data: Optional[dict] = None, parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent)
 
         self.cite_schema = schemas.rdf.CiteEntry()
@@ -35,14 +36,20 @@ class CiteWidget(QWidget):
         if cite_data is not None:
             self.set_ui_data(cite_data)
 
-    def create_ui(self):
+    def create_ui(self) -> None:
         """Create ui for the citation entry."""
         self.cite_textbox = QLineEdit()
-        cite_label, _ = enhance_widget(self.cite_textbox, "Cite Text", self.cite_schema.fields["text"])
+        cite_label, _ = enhance_widget(
+            self.cite_textbox, "Cite Text", self.cite_schema.fields["text"]
+        )
         self.doi_textbox = QLineEdit()
-        doi_label, _ = enhance_widget(self.doi_textbox, "DOI", self.cite_schema.fields["doi"])
+        doi_label, _ = enhance_widget(
+            self.doi_textbox, "DOI", self.cite_schema.fields["doi"]
+        )
         self.url_textbox = QLineEdit()
-        url_label, _ = enhance_widget(self.url_textbox, "URL", self.cite_schema.fields["url"])
+        url_label, _ = enhance_widget(
+            self.url_textbox, "URL", self.cite_schema.fields["url"]
+        )
         #
         submit_button = QPushButton("&Submit")
         submit_button.clicked.connect(self.submit_cite)
@@ -68,13 +75,13 @@ class CiteWidget(QWidget):
         self.setMinimumWidth(450)
         self.setWindowTitle("Cite")
 
-    def set_ui_data(self, cite_data: dict):
+    def set_ui_data(self, cite_data: dict) -> None:
         """Fill ui fields with given data."""
         self.cite_textbox.setText(cite_data["text"])
         self.doi_textbox.setText(cite_data.get("doi"))
         self.url_textbox.setText(cite_data.get("url"))
 
-    def submit_cite(self):
+    def submit_cite(self) -> None:
         """Validate and submit the citation."""
         cite_data = get_ui_input_data(self)
         errors = self.cite_schema.validate(cite_data)

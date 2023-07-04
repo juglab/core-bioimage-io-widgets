@@ -1,27 +1,37 @@
-from typing import Dict, List, Tuple
-
-from qtpy.QtCore import Qt, Signal, QRegExp
-from qtpy.QtWidgets import (
-    QWidget, QApplication,
-    QGridLayout, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QPushButton, QListWidget,
-    QFileDialog, QGroupBox, QLabel, QComboBox
-)
-from qtpy.QtGui import QRegExpValidator
+from typing import List, Optional
 
 import numpy as np
+from qtpy.QtCore import QRegExp, Qt, Signal
+from qtpy.QtGui import QRegExpValidator
+from qtpy.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from core_bioimage_io_widgets.utils import (
-    nodes, schemas, safe_cast,
-    OUTPUT_TYPES
+    AXES_REGEX,
+    OUTPUT_TYPES,
+    nodes,
+    safe_cast,
+    schemas,
 )
-from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 from core_bioimage_io_widgets.widgets.postprocessing_widget import PostprocessingWidget
 from core_bioimage_io_widgets.widgets.ui_helper import (
+    create_validation_ui,
     enhance_widget,
-    create_validation_ui, remove_from_listview
+    remove_from_listview,
 )
-from core_bioimage_io_widgets.utils import AXES_REGEX
+from core_bioimage_io_widgets.widgets.validation_widget import ValidationWidget
 
 
 class OutputTensorWidget(QWidget):
@@ -29,25 +39,35 @@ class OutputTensorWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, output_names: list = [], output_data: dict = None, parent=None):
+    def __init__(
+        self,
+        output_names: Optional[list] = None,
+        output_data: Optional[dict] = None,
+        parent: Optional[QWidget] = None,
+    ) -> None:
         super().__init__(parent)
 
         self.output_tensor_schema = schemas.model.OutputTensor()
-        self.output_names = output_names  # to make this output has a unique name
-        self.output_shape = []
-        self.postprocessings = []
+        if output_names is None:
+            self.output_names = []
+        else:
+            self.output_names = output_names
+        self.output_shape: List[int] = []
+        self.postprocessings: List[dict] = []
 
         self.create_ui()
         # check edit mode
         if output_data is not None:
             self.set_ui_data(output_data)
 
-    def create_ui(self):
+    def create_ui(self) -> None:
         """Creates ui for model's output tensor."""
         self.test_output_textbox = QLineEdit()
         self.test_output_textbox.setPlaceholderText("select Test Output file (*.npy)")
         self.test_output_textbox.setReadOnly(True)
-        test_output_label, _ = enhance_widget(self.test_output_textbox, "Test Output<sup>*</sup>")
+        test_output_label, _ = enhance_widget(
+            self.test_output_textbox, "Test Output<sup>*</sup>"
+        )
         test_output_button = QPushButton("Browse...")
         test_output_button.clicked.connect(self.select_test_output)
         test_output_hbox = QHBoxLayout()
@@ -84,7 +104,9 @@ class OutputTensorWidget(QWidget):
         self.data_type_combo.setMinimumWidth(180)
         self.data_type_combo.addItems(OUTPUT_TYPES)
         data_type_label, _ = enhance_widget(
-            self.data_type_combo, "Data Type", self.output_tensor_schema.fields["data_type"]
+            self.data_type_combo,
+            "Data Type",
+            self.output_tensor_schema.fields["data_type"],
         )
         #
         postprocessing_label = QLabel("Postprocessing:")
@@ -141,7 +163,7 @@ class OutputTensorWidget(QWidget):
         self.setMaximumWidth(700)
         self.setWindowTitle("Output Tensor")
 
-    def set_ui_data(self, output_data: dict):
+    def set_ui_data(self, output_data: dict) -> None:
         """Fill ui fields with given data."""
         self.test_output_selected(output_data["test_output"])
         output_tensor_data: dict = output_data["output_tensor"]
@@ -150,13 +172,15 @@ class OutputTensorWidget(QWidget):
         self.halo_textbox.setText(
             ",".join(str(h) for h in output_tensor_data.get("halo", []))
         )
-        index = self.data_type_combo.findText(output_tensor_data.get("data_type", "float32"))
+        index = self.data_type_combo.findText(
+            output_tensor_data.get("data_type", "float32")
+        )
         if index > -1:
             self.data_type_combo.setCurrentIndex(index)
         for process in output_tensor_data.get("postprocessing", []):
             self.add_postprocessing(process)
 
-    def submit_output_tensor(self):
+    def submit_output_tensor(self) -> None:
         """Validate and submit the output tensor."""
         output_data = {
             "name": self.name_textbox.text(),
@@ -165,7 +189,9 @@ class OutputTensorWidget(QWidget):
             "axes": self.axes_textbox.text(),
         }
         if len(self.halo_textbox.text()) > 0:
-            output_data["halo"] = [safe_cast(s, int) for s in self.halo_textbox.text().split(",")]
+            output_data["halo"] = [
+                safe_cast(s, int) for s in self.halo_textbox.text().split(",")
+            ]
         output_data["data_type"] = self.data_type_combo.currentText()
         if len(self.postprocessings) > 0:
             output_data["postprocessing"] = self.postprocessings
@@ -181,19 +207,26 @@ class OutputTensorWidget(QWidget):
             return
 
         # emit submit signal and send output data
-        self.submit.emit({
-            "test_output": self.test_output_textbox.text(),
-            "output_tensor": output_data
-        })
+        self.submit.emit(
+            {
+                "test_output": self.test_output_textbox.text(),
+                "output_tensor": output_data,
+            }
+        )
         self.close()
 
-    def select_test_output(self):
-        """Opens a file dialog to select a npy file as a test output and read the output shape."""
-        selected_file, _ = QFileDialog.getOpenFileName(self, "Browse", ".", "Numpy file (*.npy)")
+    def select_test_output(self) -> None:
+        """Show a file dialog to select a npy file for test output.
+
+        Then reads the output shape.
+        """
+        selected_file, _ = QFileDialog.getOpenFileName(
+            self, "Browse", ".", "Numpy file (*.npy)"
+        )
         if selected_file is not None:
             self.test_output_selected(selected_file)
 
-    def test_output_selected(self, selected_file: str):
+    def test_output_selected(self, selected_file: str) -> None:
         """Read selected numpy file and update corresponding ui."""
         self.test_output_textbox.setText(selected_file)
         self.output_groupbox.setEnabled(True)
@@ -207,9 +240,7 @@ class OutputTensorWidget(QWidget):
         self.shape_textbox.setText(" x ".join(str(d) for d in arr.shape))
         # set axes textbox validator based on the test output array shape:
         self.axes_textbox.setMaxLength(_max_len)
-        validator = QRegExpValidator(
-            QRegExp(AXES_REGEX.replace("LEN", str(_max_len)))
-        )
+        validator = QRegExpValidator(QRegExp(AXES_REGEX.replace("LEN", str(_max_len))))
         self.axes_textbox.setValidator(validator)
         # halo
         self.halo_textbox.setValidator(QRegExpValidator(QRegExp(r"^[\d\,]*$")))
@@ -217,28 +248,32 @@ class OutputTensorWidget(QWidget):
         # set output name
         self.name_textbox.setText(self.get_output_name())
 
-    def show_postprocessing(self):
+    def show_postprocessing(self) -> None:
         """Show postprocessing form."""
         preprocess_form = PostprocessingWidget()
         preprocess_form.setWindowModality(Qt.ApplicationModal)
         preprocess_form.submit.connect(self.add_postprocessing)
         preprocess_form.show()
 
-    def add_postprocessing(self, postprocess: nodes.model.Postprocessing):
+    def add_postprocessing(self, postprocess: nodes.model.Postprocessing) -> None:
         """Add created postprocessing to the listview."""
-        self.postprocessings.append({'name': postprocess["name"], 'kwargs': postprocess["kwargs"]})
+        self.postprocessings.append(
+            {"name": postprocess["name"], "kwargs": postprocess["kwargs"]}
+        )
         text = f"{postprocess['name']} {postprocess['kwargs']}"
         self.postprocessing_listview.addItem(text)
 
-    def remove_postprocessing(self):
+    def remove_postprocessing(self) -> None:
         """Remove selected postprocessing."""
         reply, del_row = remove_from_listview(
-            self, self.postprocessing_listview, "Are you sure you want to remove the selected postprocessing?"
+            self,
+            self.postprocessing_listview,
+            "Are you sure you want to remove the selected postprocessing?",
         )
         if reply:
             del self.postprocessings[del_row]
 
-    def get_output_name(self):
+    def get_output_name(self) -> str:
         """Returns a unique name for the output."""
         num = len(self.output_names) + 1
         name = f"output_{num}"

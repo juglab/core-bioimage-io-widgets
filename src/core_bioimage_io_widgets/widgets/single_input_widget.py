@@ -1,8 +1,14 @@
+from typing import Optional
+
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
-    QWidget, QApplication,
-    QGridLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
 )
 
 
@@ -11,7 +17,9 @@ class SingleInputWidget(QWidget):
 
     submit = Signal(object, name="submit")
 
-    def __init__(self, label: str = "", title: str = "", parent=None):
+    def __init__(
+        self, label: str = "", title: str = "", parent: Optional[QWidget] = None
+    ) -> None:
         super().__init__(parent)
 
         lbl = QLabel(label)
@@ -34,14 +42,12 @@ class SingleInputWidget(QWidget):
         self.setLayout(grid)
         self.setWindowTitle(title)
 
-    def submit_input(self):
+    def submit_input(self) -> None:
         """Emit the submit event with the input text as data."""
         text_input = self.input_textbox.text().strip()
         if len(text_input) > 0:
             self.submit.emit(text_input)
             self.close()
-
-
 
 
 if __name__ == "__main__":

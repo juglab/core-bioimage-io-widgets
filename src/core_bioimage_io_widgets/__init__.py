@@ -1,4 +1,4 @@
-"""Have a widget that consumers (e.g. in napari) can use to make their BioImage.io zip export."""
+"""A BioImage.io widget to export model zip file using ui provided by this widget."""
 
 from importlib.metadata import PackageNotFoundError, version
 
