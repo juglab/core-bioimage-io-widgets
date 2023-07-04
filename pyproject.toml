@@ -19,6 +19,7 @@ requires-python = ">=3.8"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Mehdi Seifi", email = "mehdiseifi@gmail.com" },
+    { name = "Jug Lab", email = "Juggroup@fht.com" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -61,8 +62,8 @@ repository = "https://github.com/mese79/core-bioimage-io-widgets"
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points
 # same as console_scripts entry point
-# [project.scripts]
-# core-bioimage-io-widgets-cli = "core_bioimage_io_widgets:main_cli"
+[project.scripts]
+bioimageio-widget = "core_bioimage_io_widgets.__main__:main"
 
 # [project.entry-points."some.group"]
 # tomatoes = "core_bioimage_io_widgets:main_tomatoes"
