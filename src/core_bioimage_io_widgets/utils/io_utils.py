@@ -65,8 +65,9 @@ def build_model_zip(model_data: dict, zip_file_path: str) -> model.Model:
         documentation=model_data["documentation"],
         description=model_data["description"],
         license=model_data["license"],
-        covers=model_data["covers"],
-        tags=model_data["tags"],
+        # optionals
+        covers=model_data.get("covers"),
+        tags=model_data.get("tags"),
         root=Path(zip_file_path).parent,
     )
 
