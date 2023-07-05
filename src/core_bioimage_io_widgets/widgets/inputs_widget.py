@@ -46,7 +46,7 @@ class InputTensorWidget(QWidget):
         else:
             self.input_names = input_names
         self.input_shape: List[int] = []
-        self.preprocessingsl: List[dict] = []
+        self.preprocessings: List[dict] = []
 
         self.create_ui()
         # check edit mode
