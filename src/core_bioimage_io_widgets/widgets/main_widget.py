@@ -167,8 +167,7 @@ class BioImageModelWidget(QWidget):
     def load_specs(self, model_data: dict) -> None:
         """Fill ui with the the given model's specifications (model_data)."""
         # model_data should be a valid specs
-        if not self.is_valid(model_data):
-            return
+        self.is_valid(model_data)
         # set ui data
         set_ui_data_from_dict(self, model_data)  # handles basic direct inputs
         # weights
