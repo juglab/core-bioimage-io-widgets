@@ -5,7 +5,7 @@ from qtpy.QtCore import QRegExp, Qt, Signal
 from qtpy.QtGui import QRegExpValidator
 from qtpy.QtWidgets import (
     QApplication,
-    QComboBox,
+    # QComboBox,
     QFileDialog,
     QGridLayout,
     QGroupBox,
@@ -20,7 +20,7 @@ from qtpy.QtWidgets import (
 
 from core_bioimage_io_widgets.utils import (
     AXES_REGEX,
-    OUTPUT_TYPES,
+    # OUTPUT_TYPES,
     nodes,
     safe_cast,
     schemas,
@@ -96,18 +96,20 @@ class OutputTensorWidget(QWidget):
         # halo
         self.halo_textbox = QLineEdit()
         self.halo_textbox.setMinimumWidth(180)
+        self.halo_textbox.setValidator(QRegExpValidator(QRegExp(r"^[\d\,]*$")))
+        self.halo_textbox.setPlaceholderText("Empty or comma separated integers")
         halo_label, _ = enhance_widget(
             self.halo_textbox, "Halo", self.output_tensor_schema.fields["halo"]
         )
         # data type
-        self.data_type_combo = QComboBox()
-        self.data_type_combo.setMinimumWidth(180)
-        self.data_type_combo.addItems(OUTPUT_TYPES)
-        data_type_label, _ = enhance_widget(
-            self.data_type_combo,
-            "Data Type",
-            self.output_tensor_schema.fields["data_type"],
-        )
+        # self.data_type_combo = QComboBox()
+        # self.data_type_combo.setMinimumWidth(180)
+        # self.data_type_combo.addItems(OUTPUT_TYPES)
+        # data_type_label, _ = enhance_widget(
+        #     self.data_type_combo,
+        #     "Data Type",
+        #     self.output_tensor_schema.fields["data_type"],
+        # )
         #
         postprocessing_label = QLabel("Postprocessing:")
         self.postprocessing_listview = QListWidget()
@@ -140,8 +142,8 @@ class OutputTensorWidget(QWidget):
         grid.addWidget(self.axes_textbox, 2, 1, alignment=Qt.AlignLeft)
         grid.addWidget(halo_label, 3, 0)
         grid.addWidget(self.halo_textbox, 3, 1, alignment=Qt.AlignLeft)
-        grid.addWidget(data_type_label, 4, 0)
-        grid.addWidget(self.data_type_combo, 4, 1, alignment=Qt.AlignLeft)
+        # grid.addWidget(data_type_label, 4, 0)
+        # grid.addWidget(self.data_type_combo, 4, 1, alignment=Qt.AlignLeft)
         grid.addWidget(postprocessing_label, 5, 0, alignment=Qt.AlignTop)
         grid.addWidget(self.postprocessing_listview, 5, 1, alignment=Qt.AlignTop)
         grid.addLayout(postprocessing_btn_vbox, 5, 2)
@@ -172,11 +174,11 @@ class OutputTensorWidget(QWidget):
         self.halo_textbox.setText(
             ",".join(str(h) for h in output_tensor_data.get("halo", []))
         )
-        index = self.data_type_combo.findText(
-            output_tensor_data.get("data_type", "float32")
-        )
-        if index > -1:
-            self.data_type_combo.setCurrentIndex(index)
+        # index = self.data_type_combo.findText(
+        #     output_tensor_data.get("data_type", "float32")
+        # )
+        # if index > -1:
+        #     self.data_type_combo.setCurrentIndex(index)
         for process in output_tensor_data.get("postprocessing", []):
             self.add_postprocessing(process)
 
@@ -192,7 +194,7 @@ class OutputTensorWidget(QWidget):
             output_data["halo"] = [
                 safe_cast(s, int) for s in self.halo_textbox.text().split(",")
             ]
-        output_data["data_type"] = self.data_type_combo.currentText()
+        # output_data["data_type"] = self.data_type_combo.currentText()
         if len(self.postprocessings) > 0:
             output_data["postprocessing"] = self.postprocessings
         # validation
@@ -242,9 +244,6 @@ class OutputTensorWidget(QWidget):
         self.axes_textbox.setMaxLength(_max_len)
         validator = QRegExpValidator(QRegExp(AXES_REGEX.replace("LEN", str(_max_len))))
         self.axes_textbox.setValidator(validator)
-        # halo
-        self.halo_textbox.setValidator(QRegExpValidator(QRegExp(r"^[\d\,]*$")))
-        self.halo_textbox.setPlaceholderText("Empty or comma separated integers")
         # set output name
         self.name_textbox.setText(self.get_output_name())
 
