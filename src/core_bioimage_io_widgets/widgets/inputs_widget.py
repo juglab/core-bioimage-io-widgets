@@ -212,7 +212,7 @@ class InputTensorWidget(QWidget):
         self.preprocessings.append(
             {"name": preprocess["name"], "kwargs": preprocess["kwargs"]}
         )
-        text = f"{preprocess['name']} 'kwargs': preprocess['kwargs']"
+        text = f"{preprocess['name']} {preprocess['kwargs']}"
         self.preprocessing_listview.addItem(text)
 
     def remove_preprocessing(self) -> None:
