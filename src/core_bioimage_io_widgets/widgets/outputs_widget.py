@@ -53,6 +53,7 @@ class OutputTensorWidget(QWidget):
         else:
             self.output_names = output_names
         self.output_shape: List[int] = []
+        self.output_type: str = "float32"
         self.postprocessings: List[dict] = []
 
         self.create_ui()
@@ -186,7 +187,7 @@ class OutputTensorWidget(QWidget):
         """Validate and submit the output tensor."""
         output_data = {
             "name": self.name_textbox.text(),
-            "data_type": "float32",
+            "data_type": self.output_type,
             "shape": self.output_shape,
             "axes": self.axes_textbox.text(),
         }
@@ -239,6 +240,7 @@ class OutputTensorWidget(QWidget):
         _max_len = len(arr.shape)
         # output shape
         self.output_shape = arr.shape
+        self.output_type = str(arr.dtype)
         self.shape_textbox.setText(" x ".join(str(d) for d in arr.shape))
         # set axes textbox validator based on the test output array shape:
         self.axes_textbox.setMaxLength(_max_len)
