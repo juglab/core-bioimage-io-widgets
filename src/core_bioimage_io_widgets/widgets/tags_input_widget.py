@@ -46,7 +46,7 @@ class TagsInputWidget(QWidget):
         grid.addWidget(lbl, 0, 0)
         grid.addLayout(self.tags_layout, 0, 1, alignment=Qt.AlignLeft)
         grid.addWidget(self.input_textbox, 1, 1, alignment=Qt.AlignTop | Qt.AlignLeft)
-        grid.setRowStretch(-1, 1)
+        # grid.setRowStretch(-1, 1)  # BUG: causes segmentation fault crash!!
 
         self.setLayout(grid)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)

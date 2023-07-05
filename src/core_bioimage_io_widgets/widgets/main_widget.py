@@ -424,7 +424,7 @@ class BioImageModelWidget(QWidget):
         tabs.addTab(page, "Outputs")
 
         required_layout.addWidget(tabs, 4, 0, 1, 3)
-        required_layout.setRowStretch(-1, 1)
+        # required_layout.setRowStretch(-1, 1)  # BUG: causes segmentation fault crash!!
         #
         frame = QFrame()
         frame.setFrameStyle(QFrame.NoFrame)
