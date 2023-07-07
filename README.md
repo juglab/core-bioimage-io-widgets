@@ -29,12 +29,17 @@ bioimageio-widget
 ```
 
 ## napari
-You can import the `BioImageModelWidget` into your plugin, and create a new instance of it. Then you can pass your model's data to this instance to fill up the widget UI with your model data. Finally you can export your model with the `Build` button provided by the widget.  
+You can use this widget inside your napari plugin to export your model in a compatible format with the bioimage.io model zoo.  
+To do that:
+- Import the `BioImageModelWidget` into your plugin's code
+- Create a new instance of the imported widget and `show` it!
+- Either fill-up the model's specs through the ui or you can pass your model's data to the widget instance via `load_specs` method.
+- Finally you can export your model with the `Build` button provided by the widget.  
 ```python
     from core_bioimage_io_widgets.widgets import BioImageModelWidget
 
     # Populate the model data dictionary
-    # The formats follows the spec-bioimage-io rdf:
+    # The data format follows the spec-bioimage-io model's rdf:
     # https://github.com/bioimage-io/spec-bioimage-io/blob/gh-pages/model_spec_latest.md
     model_data = {
         "format_version": "0.4.9",
@@ -58,3 +63,5 @@ You can import the `BioImageModelWidget` into your plugin, and create a new inst
     bioimageio_win.show()
     bioimageio_win.load_specs(model_data)
 ```
+
+![Bioimage.io Model Widget](model_widget.png)
