@@ -72,10 +72,16 @@ class BioImageModelWidget(QWidget):
         tabs.addTab(self.create_other_spec_ui(), "Optional Fields")
         #
         load_button = QPushButton("&Load Config")
+        load_button.setToolTip("To load a model specifications from a YAML file.")
         load_button.clicked.connect(self.load_from_file)
         save_button = QPushButton("&Save Config")
+        save_button.setToolTip("To save the model specifications to a YAML file.")
         save_button.clicked.connect(self.save_specs)
         build_button = QPushButton("&Build Model")
+        build_button.setToolTip(
+            "To export the model to the zip format compatible with the BioImage model"
+            " zoo."
+        )
         build_button.clicked.connect(self.build_model)
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(load_button)
@@ -106,7 +112,7 @@ class BioImageModelWidget(QWidget):
                 )
 
     def load_from_file(self) -> None:
-        """Open a file dialog to select model yaml file."""
+        """Open a file dialog to select model YAML file."""
         selected_yml = select_file("Yaml file (*.yaml)", self)
         if selected_yml is not None:
             with open(selected_yml) as f:
@@ -165,8 +171,16 @@ class BioImageModelWidget(QWidget):
         return None
 
     def load_specs(self, model_data: dict) -> None:
-        """Fill ui with the the given model's specifications (model_data)."""
-        # model_data should be a valid specs
+        """
+        Fill ui with the the given model's specifications.
+
+        Parameters
+        ----------
+        model_data: dict
+            a dictionary contains all required and optional fields
+            for validationg a model RDF specs.
+        """
+        # model_data should be a valid specs (only show potential errors)
         self.is_valid(model_data)
         # set ui data
         set_ui_data_from_dict(self, model_data)  # handles basic direct inputs
@@ -235,7 +249,7 @@ class BioImageModelWidget(QWidget):
         return True
 
     def create_required_specs_ui(self) -> QWidget:
-        """Create ui for the required specs."""
+        """Create ui for the required specifications and fields."""
         # model name
         name_textbox = QLineEdit()
         name_label, _ = enhance_widget(

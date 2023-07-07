@@ -1,4 +1,4 @@
-"""A BioImage.io widget to export model zip file using ui provided by this widget."""
+"""A GUI widget for creating and exporting models compatible with BioImage model zoo."""
 
 from importlib.metadata import PackageNotFoundError, version
 
@@ -7,5 +7,5 @@ try:
 except PackageNotFoundError:
     __version__ = "uninstalled"
 
-__author__ = "Jug Lab"
+__author__ = "Mehdi Seifi"
 __email__ = "mehdiseifi@gmail.com"

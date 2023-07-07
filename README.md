@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/pypi/l/core-bioimage-io-widgets.svg?color=green)](https://github.com/mese79/core-bioimage-io-widgets/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/core-bioimage-io-widgets.svg?color=green)](https://pypi.org/project/core-bioimage-io-widgets)
 [![Python Version](https://img.shields.io/pypi/pyversions/core-bioimage-io-widgets.svg?color=green)](https://python.org)
-[![CI](https://github.com/mese79/core-bioimage-io-widgets/actions/workflows/ci.yml/badge.svg)](https://github.com/mese79/core-bioimage-io-widgets/actions/workflows/ci.yml)
+[![CI](https://github.com/juglab/core-bioimage-io-widgets/actions/workflows/ci.yml/badge.svg)](https://github.com/juglab/core-bioimage-io-widgets/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/mese79/core-bioimage-io-widgets/branch/main/graph/badge.svg)](https://codecov.io/gh/mese79/core-bioimage-io-widgets)
 
 This is a QT UI widget for creating BioImage.io models' specs, and building model.zip files compatible with BioImage model zoo.
@@ -26,4 +26,35 @@ pip install -e .
 To run widget issue this command:
 ```bash
 bioimageio-widget
+```
+
+## napari
+You can import the `BioImageModelWidget` into your plugin, and create a new instance of it. Then you can pass your model's data to this instance to fill up the widget UI with your model data. Finally you can export your model with the `Build` button provided by the widget.  
+```python
+    from core_bioimage_io_widgets.widgets import BioImageModelWidget
+
+    # Populate the model data dictionary
+    # The formats follows the spec-bioimage-io rdf:
+    # https://github.com/bioimage-io/spec-bioimage-io/blob/gh-pages/model_spec_latest.md
+    model_data = {
+        "format_version": "0.4.9",
+        "type": "model",
+        "timestamp": dt.datetime.now().isoformat(),
+        "name": "My Model",
+        "description": "Some descriptions.",
+        "license": "BSD-3-Clause",
+        "documentation": "./path/to/file.md",
+        "weights": {"keras_hdf5": {"source": str(weights)}},
+        "authors": authors,
+        "test_inputs": [inputs],
+        "test_outputs": [outputs],
+        "cite": cite,
+        ...
+    }
+
+    # Create an instance of bioimage.io core ui widget
+    # and pass the model data to it:
+    bioimageio_win = BioImageModelWidget()
+    bioimageio_win.show()
+    bioimageio_win.load_specs(model_data)
 ```

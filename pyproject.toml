@@ -13,13 +13,12 @@ source = "vcs"
 [project]
 name = "core-bioimage-io-widgets"
 dynamic = ["version"]
-description = "Have a widget that consumers (e.g. in napari) can use to make their BioImage.io zip export"
+description = "A GUI widget for creating and exporting models compatible with the BioImage.io model zoo."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "BSD-3-Clause" }
 authors = [
     { name = "Mehdi Seifi", email = "mehdiseifi@gmail.com" },
-    { name = "Jug Lab", email = "Juggroup@fht.com" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
