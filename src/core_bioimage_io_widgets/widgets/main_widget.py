@@ -114,7 +114,7 @@ class BioImageModelWidget(QWidget):
     def load_from_file(self) -> None:
         """Open a file dialog to select model YAML file."""
         selected_yml = select_file("Yaml file (*.yaml)", self)
-        if selected_yml is not None:
+        if selected_yml:
             with open(selected_yml) as f:
                 model_data = yaml.safe_load(f)
                 self.load_specs(model_data)
